@@ -719,12 +719,347 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: #c8d0da; border-radius: 3px; }
 
+  /* ── TAB PANELS ── */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── AD: FILTER BAR ── */
+  .ad-filter-bar {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px 24px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .ad-filter-bar .field { flex: 1; }
+  .ad-filter-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-right: auto;
+    white-space: nowrap;
+  }
+
+  /* ── AD: KPI ROW ── */
+  .ad-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+  }
+  .ad-kpi {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+  .ad-kpi-value {
+    font-size: 28px;
+    font-weight: 800;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--dnp-navy);
+    line-height: 1;
+  }
+  .ad-kpi-label {
+    font-size: 11px;
+    color: var(--text3);
+    font-weight: 600;
+    margin-top: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .ad-kpi-sub {
+    font-size: 11px;
+    color: var(--text2);
+    margin-top: 3px;
+  }
+  .ad-kpi.kpi-alert {
+    border-color: var(--risk-high);
+    background: #fff8f5;
+  }
+  .ad-kpi.kpi-alert .ad-kpi-value { color: var(--risk-high); }
+
+  /* ── AD: SECTION GRID ── */
+  .ad-row { display: grid; gap: 16px; }
+  .ad-row-2 { grid-template-columns: 1fr 1fr; }
+  .ad-row-3-1 { grid-template-columns: 1.2fr 0.8fr; }
+  .ad-row-1-1 { grid-template-columns: 1fr 1fr; }
+
+  /* ── AD: HISTOGRAM ── */
+  .ad-histo-wrap { position: relative; padding: 12px 0; }
+  .ad-histo-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 160px;
+    padding: 0 4px;
+  }
+  .ad-histo-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    height: 100%;
+    justify-content: flex-end;
+  }
+  .ad-histo-bar {
+    width: 100%;
+    border-radius: 4px 4px 0 0;
+    min-height: 4px;
+    transition: height 0.8s ease;
+    position: relative;
+  }
+  .ad-histo-bar:hover { opacity: 0.85; cursor: default; }
+  .ad-histo-count {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text2);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .ad-histo-label {
+    font-size: 9px;
+    color: var(--text3);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .ad-chips {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .ad-chip {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ad-chip-count {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  /* ── AD: HORIZONTAL BARS ── */
+  .ad-hbar-list { display: flex; flex-direction: column; gap: 10px; padding: 6px 0; }
+  .ad-hbar-item {
+    display: grid;
+    grid-template-columns: 120px 1fr 50px;
+    gap: 10px;
+    align-items: center;
+  }
+  .ad-hbar-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text2);
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ad-hbar-track {
+    height: 22px;
+    background: var(--surface2);
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .ad-hbar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 1s ease;
+    display: flex;
+    align-items: center;
+    padding-left: 8px;
+  }
+  .ad-hbar-fill span {
+    font-size: 10px;
+    font-weight: 700;
+    color: white;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .ad-hbar-val {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* ── AD: SECTOR CHIPS ── */
+  .ad-sector-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 0;
+  }
+  .ad-sector-chip {
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 100px;
+    transition: all 0.2s;
+  }
+  .ad-sector-chip:hover { box-shadow: var(--shadow); }
+  .ad-sector-name {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .ad-sector-score {
+    font-size: 20px;
+    font-weight: 800;
+    font-family: 'IBM Plex Mono', monospace;
+    line-height: 1;
+  }
+  .ad-sector-pct {
+    font-size: 9px;
+    color: var(--text3);
+    font-weight: 600;
+  }
+
+  /* ── AD: DONUT ── */
+  .ad-donut-area {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
+  .ad-donut-chart { flex-shrink: 0; }
+  .ad-donut-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    padding-top: 6px;
+  }
+  .ad-donut-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--surface2);
+    border-radius: 6px;
+  }
+  .ad-donut-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .ad-donut-lbl { font-size: 12px; color: var(--text2); flex: 1; }
+  .ad-donut-val {
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--text);
+  }
+
+  /* ── AD: ALERTS ── */
+  .ad-alerts { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+  .ad-alert-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .ad-alert-critical { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+  .ad-alert-warning { background: #fef3c7; color: #92400e; border: 1px solid #fbbf24; }
+  .ad-alert-num {
+    font-size: 16px;
+    font-weight: 800;
+    font-family: 'IBM Plex Mono', monospace;
+    min-width: 28px;
+  }
+
+  /* ── AD: SPARKLINE ── */
+  .ad-spark-area {
+    padding: 14px 6px 8px;
+    position: relative;
+  }
+  .ad-spark-labels {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+    margin-top: 8px;
+  }
+  .ad-spark-lbl {
+    font-size: 10px;
+    color: var(--text3);
+    font-weight: 600;
+    text-align: center;
+  }
+  .ad-spark-val {
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* ── AD: RANKING TABLES ── */
+  .ad-rank-table { width: 100%; border-spacing: 0; }
+  .ad-rank-table th {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 2px solid var(--border);
+  }
+  .ad-rank-table th:last-child { text-align: right; }
+  .ad-rank-table td {
+    font-size: 12px;
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text2);
+  }
+  .ad-rank-table td:last-child { text-align: right; }
+  .ad-rank-table tr:hover td { background: var(--surface2); }
+  .ad-rank-name { font-weight: 600; color: var(--text); }
+  .ad-rank-score {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .ad-rank-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .ad-rank-low { background: #d1fae5; color: #065f46; }
+  .ad-rank-crit { background: #fee2e2; color: #991b1b; }
+
   /* ── RESPONSIVE ── */
   @media (max-width: 900px) {
     .content-grid { grid-template-columns: 1fr; }
     .search-row { grid-template-columns: 1fr 1fr; }
     .cap-grid { grid-template-columns: 1fr; }
     .igpr-grid { grid-template-columns: 1fr; }
+    .ad-kpi-row { grid-template-columns: repeat(2, 1fr); }
+    .ad-row-2, .ad-row-3-1, .ad-row-1-1 { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -752,13 +1087,15 @@
 
 <!-- NAV TABS -->
 <nav class="nav-tabs">
-  <div class="nav-tab active">Perfil de Riesgo</div>
-  <div class="nav-tab">Comparar Ejecutores</div>
-  <div class="nav-tab">Histórico IGPR</div>
-  <div class="nav-tab">Documentación</div>
+  <div class="nav-tab active" onclick="switchTab('perfil')">Perfil de Riesgo</div>
+  <div class="nav-tab" onclick="switchTab('descriptivo')">Análisis Descriptivo</div>
+  <div class="nav-tab" onclick="switchTab('comparar')">Comparar Ejecutores</div>
+  <div class="nav-tab" onclick="switchTab('historico')">Histórico IGPR</div>
+  <div class="nav-tab" onclick="switchTab('docs')">Documentación</div>
 </nav>
 
-<!-- MAIN -->
+<!-- TAB: PERFIL DE RIESGO -->
+<div class="tab-panel active" id="tab-perfil">
 <main class="main">
 
   <!-- SEARCH PANEL -->
@@ -1091,6 +1428,516 @@
     </div>
   </div>
 </main>
+</div>
+
+<!-- TAB: ANÁLISIS DESCRIPTIVO -->
+<div class="tab-panel" id="tab-descriptivo">
+<main class="main">
+
+  <!-- FILTER BAR -->
+  <div class="ad-filter-bar">
+    <span class="ad-filter-label">Filtros</span>
+    <div class="field">
+      <label>Vigencia</label>
+      <select>
+        <option selected>2025</option>
+        <option>2024</option>
+        <option>2023</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Tipo de ejecutor</label>
+      <select>
+        <option selected>Todos</option>
+        <option>Departamento</option>
+        <option>Municipio</option>
+        <option>Corporación Autónoma Regional</option>
+        <option>Entidad descentralizada</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Región</label>
+      <select>
+        <option selected>Todas</option>
+        <option>Caribe I</option>
+        <option>Caribe II</option>
+        <option>Centro Oriente</option>
+        <option>Centro Sur</option>
+        <option>Del Llano</option>
+        <option>Eje Cafetero</option>
+        <option>Pacífico</option>
+      </select>
+    </div>
+    <button class="btn-primary">Actualizar</button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="ad-kpi-row">
+    <div class="ad-kpi">
+      <div class="ad-kpi-value">1 247</div>
+      <div class="ad-kpi-label">Ejecutores</div>
+      <div class="ad-kpi-sub">en el sistema SGR</div>
+    </div>
+    <div class="ad-kpi">
+      <div class="ad-kpi-value">8 432</div>
+      <div class="ad-kpi-label">Proyectos activos</div>
+      <div class="ad-kpi-sub">en ejecución vigente</div>
+    </div>
+    <div class="ad-kpi">
+      <div class="ad-kpi-value">$4,2B</div>
+      <div class="ad-kpi-label">Recursos SGR</div>
+      <div class="ad-kpi-sub">bajo seguimiento</div>
+    </div>
+    <div class="ad-kpi">
+      <div class="ad-kpi-value">58</div>
+      <div class="ad-kpi-label">IGPR promedio</div>
+      <div class="ad-kpi-sub">puntos · vigencia 2025</div>
+    </div>
+    <div class="ad-kpi kpi-alert">
+      <div class="ad-kpi-value">23%</div>
+      <div class="ad-kpi-label">Riesgo alto/crítico</div>
+      <div class="ad-kpi-sub">287 ejecutores</div>
+    </div>
+  </div>
+
+  <!-- HISTOGRAM + TWO BARS -->
+  <div class="ad-row ad-row-3-1">
+
+    <!-- Histogram -->
+    <div class="card">
+      <div class="card-title">Distribución del score de riesgo</div>
+      <div class="ad-histo-wrap">
+        <div class="ad-histo-bars">
+          <div class="ad-histo-col">
+            <div class="ad-histo-count">42</div>
+            <div class="ad-histo-bar" style="height:14%;background:var(--risk-low);"></div>
+            <div class="ad-histo-label">0–10</div>
+          </div>
+          <div class="ad-histo-col">
+            <div class="ad-histo-count">118</div>
+            <div class="ad-histo-bar" style="height:38%;background:var(--risk-low);"></div>
+            <div class="ad-histo-label">10–20</div>
+          </div>
+          <div class="ad-histo-col">
+            <div class="ad-histo-count">186</div>
+            <div class="ad-histo-bar" style="height:60%;background:var(--risk-low);"></div>
+            <div class="ad-histo-label">20–30</div>
+          </div>
+          <div class="ad-histo-col">
+            <div class="ad-histo-count">203</div>
+            <div class="ad-histo-bar" style="height:66%;background:#7ccf5b;"></div>
+            <div class="ad-histo-label">30–40</div>
+          </div>
+          <div class="ad-histo-col">
+            <div class="ad-histo-count">248</div>
+            <div class="ad-histo-bar" style="height:80%;background:var(--risk-med);"></div>
+            <div class="ad-histo-label">40–50</div>
+          </div>
+          <div class="ad-histo-col">
+            <div class="ad-histo-count">308</div>
+            <div class="ad-histo-bar" style="height:100%;background:var(--risk-med);"></div>
+            <div class="ad-histo-label">50–60</div>
+          </div>
+          <div class="ad-histo-col">
+            <div class="ad-histo-count">186</div>
+            <div class="ad-histo-bar" style="height:60%;background:var(--risk-high);"></div>
+            <div class="ad-histo-label">60–70</div>
+          </div>
+          <div class="ad-histo-col">
+            <div class="ad-histo-count">98</div>
+            <div class="ad-histo-bar" style="height:32%;background:var(--risk-high);"></div>
+            <div class="ad-histo-label">70–80</div>
+          </div>
+          <div class="ad-histo-col">
+            <div class="ad-histo-count">45</div>
+            <div class="ad-histo-bar" style="height:15%;background:var(--risk-critical);"></div>
+            <div class="ad-histo-label">80–90</div>
+          </div>
+          <div class="ad-histo-col">
+            <div class="ad-histo-count">13</div>
+            <div class="ad-histo-bar" style="height:4%;background:var(--risk-critical);"></div>
+            <div class="ad-histo-label">90–100</div>
+          </div>
+        </div>
+      </div>
+      <div class="ad-chips">
+        <div class="ad-chip" style="background:#d1fae5;color:#065f46;">
+          <span class="ad-chip-count">549</span> Bajo
+        </div>
+        <div class="ad-chip" style="background:#fef9c3;color:#713f12;">
+          <span class="ad-chip-count">411</span> Medio
+        </div>
+        <div class="ad-chip" style="background:#fed7aa;color:#9a3412;">
+          <span class="ad-chip-count">229</span> Alto
+        </div>
+        <div class="ad-chip" style="background:#fee2e2;color:#991b1b;">
+          <span class="ad-chip-count">58</span> Crítico
+        </div>
+      </div>
+    </div>
+
+    <!-- Vertical stack: type + region bars -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+
+      <!-- By entity type -->
+      <div class="card">
+        <div class="card-title">Riesgo promedio por tipo de ejecutor</div>
+        <div class="ad-hbar-list">
+          <div class="ad-hbar-item">
+            <div class="ad-hbar-name">Municipio</div>
+            <div class="ad-hbar-track"><div class="ad-hbar-fill" style="width:62%;background:var(--risk-high);"><span>62</span></div></div>
+            <div class="ad-hbar-val">62</div>
+          </div>
+          <div class="ad-hbar-item">
+            <div class="ad-hbar-name">Departamento</div>
+            <div class="ad-hbar-track"><div class="ad-hbar-fill" style="width:48%;background:var(--risk-med);"><span>48</span></div></div>
+            <div class="ad-hbar-val">48</div>
+          </div>
+          <div class="ad-hbar-item">
+            <div class="ad-hbar-name">Corp. Autónoma</div>
+            <div class="ad-hbar-track"><div class="ad-hbar-fill" style="width:41%;background:var(--risk-med);"><span>41</span></div></div>
+            <div class="ad-hbar-val">41</div>
+          </div>
+          <div class="ad-hbar-item">
+            <div class="ad-hbar-name">Ent. Descentr.</div>
+            <div class="ad-hbar-track"><div class="ad-hbar-fill" style="width:35%;background:var(--risk-low);"><span>35</span></div></div>
+            <div class="ad-hbar-val">35</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- By region -->
+      <div class="card">
+        <div class="card-title">Riesgo promedio por región</div>
+        <div class="ad-hbar-list">
+          <div class="ad-hbar-item">
+            <div class="ad-hbar-name">Caribe I</div>
+            <div class="ad-hbar-track"><div class="ad-hbar-fill" style="width:68%;background:var(--risk-high);"><span>68</span></div></div>
+            <div class="ad-hbar-val">68</div>
+          </div>
+          <div class="ad-hbar-item">
+            <div class="ad-hbar-name">Pacífico</div>
+            <div class="ad-hbar-track"><div class="ad-hbar-fill" style="width:64%;background:var(--risk-high);"><span>64</span></div></div>
+            <div class="ad-hbar-val">64</div>
+          </div>
+          <div class="ad-hbar-item">
+            <div class="ad-hbar-name">Caribe II</div>
+            <div class="ad-hbar-track"><div class="ad-hbar-fill" style="width:57%;background:var(--risk-med);"><span>57</span></div></div>
+            <div class="ad-hbar-val">57</div>
+          </div>
+          <div class="ad-hbar-item">
+            <div class="ad-hbar-name">Centro Sur</div>
+            <div class="ad-hbar-track"><div class="ad-hbar-fill" style="width:52%;background:var(--risk-med);"><span>52</span></div></div>
+            <div class="ad-hbar-val">52</div>
+          </div>
+          <div class="ad-hbar-item">
+            <div class="ad-hbar-name">Del Llano</div>
+            <div class="ad-hbar-track"><div class="ad-hbar-fill" style="width:46%;background:var(--risk-med);"><span>46</span></div></div>
+            <div class="ad-hbar-val">46</div>
+          </div>
+          <div class="ad-hbar-item">
+            <div class="ad-hbar-name">Eje Cafetero</div>
+            <div class="ad-hbar-track"><div class="ad-hbar-fill" style="width:38%;background:var(--risk-low);"><span>38</span></div></div>
+            <div class="ad-hbar-val">38</div>
+          </div>
+          <div class="ad-hbar-item">
+            <div class="ad-hbar-name">Centro Oriente</div>
+            <div class="ad-hbar-track"><div class="ad-hbar-fill" style="width:33%;background:var(--risk-low);"><span>33</span></div></div>
+            <div class="ad-hbar-val">33</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SECTOR CHIPS -->
+  <div class="card">
+    <div class="card-title">Semáforo sectorial — score de riesgo promedio por sector</div>
+    <div class="ad-sector-grid">
+      <div class="ad-sector-chip" style="background:#fff8f5;border-color:var(--risk-high);">
+        <div class="ad-sector-name">Agua Potable</div>
+        <div class="ad-sector-score" style="color:var(--risk-high);">71</div>
+        <div class="ad-sector-pct">184 proyectos</div>
+      </div>
+      <div class="ad-sector-chip" style="background:#fff8f5;border-color:var(--risk-high);">
+        <div class="ad-sector-name">Vivienda</div>
+        <div class="ad-sector-score" style="color:var(--risk-high);">67</div>
+        <div class="ad-sector-pct">92 proyectos</div>
+      </div>
+      <div class="ad-sector-chip" style="background:#fffbeb;border-color:var(--risk-med);">
+        <div class="ad-sector-name">Transporte</div>
+        <div class="ad-sector-score" style="color:var(--risk-med);">58</div>
+        <div class="ad-sector-pct">1 247 proyectos</div>
+      </div>
+      <div class="ad-sector-chip" style="background:#fffbeb;border-color:var(--risk-med);">
+        <div class="ad-sector-name">Agricultura</div>
+        <div class="ad-sector-score" style="color:var(--risk-med);">54</div>
+        <div class="ad-sector-pct">318 proyectos</div>
+      </div>
+      <div class="ad-sector-chip" style="background:#fffbeb;border-color:var(--risk-med);">
+        <div class="ad-sector-name">Deporte</div>
+        <div class="ad-sector-score" style="color:var(--risk-med);">51</div>
+        <div class="ad-sector-pct">426 proyectos</div>
+      </div>
+      <div class="ad-sector-chip" style="background:#f0fdf4;border-color:var(--risk-low);">
+        <div class="ad-sector-name">Salud</div>
+        <div class="ad-sector-score" style="color:var(--risk-low);">42</div>
+        <div class="ad-sector-pct">873 proyectos</div>
+      </div>
+      <div class="ad-sector-chip" style="background:#f0fdf4;border-color:var(--risk-low);">
+        <div class="ad-sector-name">Educación</div>
+        <div class="ad-sector-score" style="color:var(--risk-low);">38</div>
+        <div class="ad-sector-pct">2 106 proyectos</div>
+      </div>
+      <div class="ad-sector-chip" style="background:#f0fdf4;border-color:var(--risk-low);">
+        <div class="ad-sector-name">Cultura</div>
+        <div class="ad-sector-score" style="color:var(--risk-low);">35</div>
+        <div class="ad-sector-pct">210 proyectos</div>
+      </div>
+      <div class="ad-sector-chip" style="background:#f0fdf4;border-color:var(--risk-low);">
+        <div class="ad-sector-name">TIC</div>
+        <div class="ad-sector-score" style="color:var(--risk-low);">29</div>
+        <div class="ad-sector-pct">156 proyectos</div>
+      </div>
+      <div class="ad-sector-chip" style="background:#f0fdf4;border-color:var(--risk-low);">
+        <div class="ad-sector-name">C. y Tecnol.</div>
+        <div class="ad-sector-score" style="color:var(--risk-low);">24</div>
+        <div class="ad-sector-pct">89 proyectos</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DONUT + TREND -->
+  <div class="ad-row ad-row-1-1">
+
+    <!-- Donut: project status -->
+    <div class="card">
+      <div class="card-title">Estado del portafolio de proyectos</div>
+      <div class="ad-donut-area">
+        <div class="ad-donut-chart">
+          <svg width="170" height="170" viewBox="0 0 170 170">
+            <circle cx="85" cy="85" r="65" fill="none" stroke="#e2e6ec" stroke-width="24"/>
+            <!-- En Ejecución 52% -->
+            <circle cx="85" cy="85" r="65" fill="none" stroke="var(--dnp-blue)" stroke-width="24"
+              stroke-dasharray="212.1 408.4" stroke-dashoffset="0" transform="rotate(-90 85 85)"/>
+            <!-- Terminado 28% -->
+            <circle cx="85" cy="85" r="65" fill="none" stroke="var(--risk-low)" stroke-width="24"
+              stroke-dasharray="114.2 408.4" stroke-dashoffset="-212.1" transform="rotate(-90 85 85)"/>
+            <!-- Sin Contratar 15% -->
+            <circle cx="85" cy="85" r="65" fill="none" stroke="var(--risk-med)" stroke-width="24"
+              stroke-dasharray="61.3 408.4" stroke-dashoffset="-326.3" transform="rotate(-90 85 85)"/>
+            <!-- Desaprobado 5% -->
+            <circle cx="85" cy="85" r="65" fill="none" stroke="var(--risk-critical)" stroke-width="24"
+              stroke-dasharray="20.4 408.4" stroke-dashoffset="-387.6" transform="rotate(-90 85 85)"/>
+            <text x="85" y="82" text-anchor="middle" font-size="22" font-weight="800" fill="var(--dnp-navy)" font-family="'IBM Plex Mono',monospace">8 432</text>
+            <text x="85" y="100" text-anchor="middle" font-size="10" fill="var(--text3)" font-family="'IBM Plex Sans',sans-serif" font-weight="600">PROYECTOS</text>
+          </svg>
+        </div>
+        <div class="ad-donut-legend">
+          <div class="ad-donut-item">
+            <div class="ad-donut-dot" style="background:var(--dnp-blue);"></div>
+            <span class="ad-donut-lbl">En Ejecución</span>
+            <span class="ad-donut-val">4 385 <span style="font-size:10px;color:var(--text3);font-weight:500;">52%</span></span>
+          </div>
+          <div class="ad-donut-item">
+            <div class="ad-donut-dot" style="background:var(--risk-low);"></div>
+            <span class="ad-donut-lbl">Terminado</span>
+            <span class="ad-donut-val">2 361 <span style="font-size:10px;color:var(--text3);font-weight:500;">28%</span></span>
+          </div>
+          <div class="ad-donut-item">
+            <div class="ad-donut-dot" style="background:var(--risk-med);"></div>
+            <span class="ad-donut-lbl">Sin Contratar</span>
+            <span class="ad-donut-val">1 265 <span style="font-size:10px;color:var(--text3);font-weight:500;">15%</span></span>
+          </div>
+          <div class="ad-donut-item">
+            <div class="ad-donut-dot" style="background:var(--risk-critical);"></div>
+            <span class="ad-donut-lbl">Desaprobado</span>
+            <span class="ad-donut-val">421 <span style="font-size:10px;color:var(--text3);font-weight:500;">5%</span></span>
+          </div>
+        </div>
+      </div>
+      <div class="ad-alerts">
+        <div class="ad-alert-item ad-alert-critical">
+          <span class="ad-alert-num">142</span>
+          proyectos con todos los contratos suspendidos
+        </div>
+        <div class="ad-alert-item ad-alert-critical">
+          <span class="ad-alert-num">67</span>
+          proyectos con decisión motivada de no continuidad
+        </div>
+        <div class="ad-alert-item ad-alert-warning">
+          <span class="ad-alert-num">318</span>
+          proyectos con programación vencida
+        </div>
+      </div>
+    </div>
+
+    <!-- Trend line -->
+    <div class="card">
+      <div class="card-title">Evolución del score de riesgo promedio</div>
+      <div class="ad-spark-area">
+        <svg viewBox="0 0 500 190" xmlns="http://www.w3.org/2000/svg" style="width:100%;">
+          <!-- Grid lines -->
+          <line x1="50" y1="20" x2="460" y2="20" stroke="#e2e6ec" stroke-width="1" stroke-dasharray="4"/>
+          <line x1="50" y1="55" x2="460" y2="55" stroke="#e2e6ec" stroke-width="1" stroke-dasharray="4"/>
+          <line x1="50" y1="90" x2="460" y2="90" stroke="#e2e6ec" stroke-width="1" stroke-dasharray="4"/>
+          <line x1="50" y1="125" x2="460" y2="125" stroke="#e2e6ec" stroke-width="1" stroke-dasharray="4"/>
+          <line x1="50" y1="160" x2="460" y2="160" stroke="#e2e6ec" stroke-width="1"/>
+          <!-- Y labels -->
+          <text x="40" y="24" text-anchor="end" font-size="9" fill="#8a97a8" font-family="'IBM Plex Mono',monospace">80</text>
+          <text x="40" y="59" text-anchor="end" font-size="9" fill="#8a97a8" font-family="'IBM Plex Mono',monospace">60</text>
+          <text x="40" y="94" text-anchor="end" font-size="9" fill="#8a97a8" font-family="'IBM Plex Mono',monospace">40</text>
+          <text x="40" y="129" text-anchor="end" font-size="9" fill="#8a97a8" font-family="'IBM Plex Mono',monospace">20</text>
+          <text x="40" y="164" text-anchor="end" font-size="9" fill="#8a97a8" font-family="'IBM Plex Mono',monospace">0</text>
+          <!-- Range band (min-max) -->
+          <polygon points="92,122 174,108 256,98 338,80 420,68 420,132 338,118 256,128 174,138 92,148" fill="var(--dnp-blue)" opacity="0.08"/>
+          <!-- Trend line: 2021=38, 2022=44, 2023=49, 2024=55, 2025=58 -->
+          <polyline points="92,127 174,116 256,104 338,90 420,83"
+            fill="none" stroke="var(--dnp-blue)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- Points -->
+          <circle cx="92"  cy="127" r="6" fill="var(--risk-low)"    stroke="white" stroke-width="2.5"/>
+          <circle cx="174" cy="116" r="6" fill="var(--risk-med)"    stroke="white" stroke-width="2.5"/>
+          <circle cx="256" cy="104" r="6" fill="var(--risk-med)"    stroke="white" stroke-width="2.5"/>
+          <circle cx="338" cy="90"  r="6" fill="var(--risk-med)"    stroke="white" stroke-width="2.5"/>
+          <circle cx="420" cy="83"  r="6" fill="var(--risk-high)"   stroke="white" stroke-width="2.5"/>
+          <!-- Value labels -->
+          <text x="92"  y="117" text-anchor="middle" font-size="11" font-weight="700" fill="var(--risk-low)" font-family="'IBM Plex Mono',monospace">38</text>
+          <text x="174" y="106" text-anchor="middle" font-size="11" font-weight="700" fill="var(--risk-med)" font-family="'IBM Plex Mono',monospace">44</text>
+          <text x="256" y="94"  text-anchor="middle" font-size="11" font-weight="700" fill="var(--risk-med)" font-family="'IBM Plex Mono',monospace">49</text>
+          <text x="338" y="80"  text-anchor="middle" font-size="11" font-weight="700" fill="var(--risk-med)" font-family="'IBM Plex Mono',monospace">55</text>
+          <text x="420" y="73"  text-anchor="middle" font-size="11" font-weight="700" fill="var(--risk-high)" font-family="'IBM Plex Mono',monospace">58</text>
+          <!-- X labels -->
+          <text x="92"  y="178" text-anchor="middle" font-size="11" font-weight="600" fill="#4a5568" font-family="'IBM Plex Sans',sans-serif">2021</text>
+          <text x="174" y="178" text-anchor="middle" font-size="11" font-weight="600" fill="#4a5568" font-family="'IBM Plex Sans',sans-serif">2022</text>
+          <text x="256" y="178" text-anchor="middle" font-size="11" font-weight="600" fill="#4a5568" font-family="'IBM Plex Sans',sans-serif">2023</text>
+          <text x="338" y="178" text-anchor="middle" font-size="11" font-weight="600" fill="#4a5568" font-family="'IBM Plex Sans',sans-serif">2024</text>
+          <text x="420" y="178" text-anchor="middle" font-size="11" font-weight="700" fill="var(--dnp-navy)" font-family="'IBM Plex Sans',sans-serif">2025</text>
+        </svg>
+      </div>
+      <div class="alert-box" style="margin-top:6px;">
+        <div class="alert-icon">📈</div>
+        <div class="alert-text">
+          <strong>Tendencia al alza.</strong> El riesgo promedio del sistema ha crecido <strong>20 puntos</strong> en 5 años (de 38 a 58), pasando de nivel Bajo a Medio. La aceleración se concentra entre 2023 y 2025 (+9 pts).
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RANKING TABLES -->
+  <div class="ad-row ad-row-1-1">
+
+    <!-- Top idóneos -->
+    <div class="card">
+      <div class="card-title">Ejecutores con menor riesgo — Top 5</div>
+      <table class="ad-rank-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Ejecutor</th>
+            <th>Tipo</th>
+            <th>Región</th>
+            <th>Score</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:700;color:var(--risk-low);">1</td>
+            <td class="ad-rank-name">Soplaviento</td>
+            <td>Municipio</td>
+            <td>Caribe II</td>
+            <td><span class="ad-rank-score" style="color:var(--risk-low);">12</span> <span class="ad-rank-badge ad-rank-low">Bajo</span></td>
+          </tr>
+          <tr>
+            <td style="font-weight:700;color:var(--risk-low);">2</td>
+            <td class="ad-rank-name">Castilla La Nueva</td>
+            <td>Municipio</td>
+            <td>Del Llano</td>
+            <td><span class="ad-rank-score" style="color:var(--risk-low);">15</span> <span class="ad-rank-badge ad-rank-low">Bajo</span></td>
+          </tr>
+          <tr>
+            <td style="font-weight:700;color:var(--risk-low);">3</td>
+            <td class="ad-rank-name">Gob. de Risaralda</td>
+            <td>Departamento</td>
+            <td>Eje Cafetero</td>
+            <td><span class="ad-rank-score" style="color:var(--risk-low);">18</span> <span class="ad-rank-badge ad-rank-low">Bajo</span></td>
+          </tr>
+          <tr>
+            <td style="font-weight:700;color:var(--risk-low);">4</td>
+            <td class="ad-rank-name">Corpoguavio</td>
+            <td>Corp. Autónoma</td>
+            <td>Centro Oriente</td>
+            <td><span class="ad-rank-score" style="color:var(--risk-low);">19</span> <span class="ad-rank-badge ad-rank-low">Bajo</span></td>
+          </tr>
+          <tr>
+            <td style="font-weight:700;color:var(--risk-low);">5</td>
+            <td class="ad-rank-name">Sabaneta</td>
+            <td>Municipio</td>
+            <td>Eje Cafetero</td>
+            <td><span class="ad-rank-score" style="color:var(--risk-low);">21</span> <span class="ad-rank-badge ad-rank-low">Bajo</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Top alerta -->
+    <div class="card">
+      <div class="card-title">Ejecutores en alerta crítica — Top 5</div>
+      <table class="ad-rank-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Ejecutor</th>
+            <th>Tipo</th>
+            <th>Región</th>
+            <th>Score</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:700;color:var(--risk-critical);">1</td>
+            <td class="ad-rank-name">Mpio. de Uribia</td>
+            <td>Municipio</td>
+            <td>Caribe I</td>
+            <td><span class="ad-rank-score" style="color:var(--risk-critical);">94</span> <span class="ad-rank-badge ad-rank-crit">Crítico</span></td>
+          </tr>
+          <tr>
+            <td style="font-weight:700;color:var(--risk-critical);">2</td>
+            <td class="ad-rank-name">Mpio. de López de Micay</td>
+            <td>Municipio</td>
+            <td>Pacífico</td>
+            <td><span class="ad-rank-score" style="color:var(--risk-critical);">91</span> <span class="ad-rank-badge ad-rank-crit">Crítico</span></td>
+          </tr>
+          <tr>
+            <td style="font-weight:700;color:var(--risk-critical);">3</td>
+            <td class="ad-rank-name">Mpio. de Riosucio</td>
+            <td>Municipio</td>
+            <td>Pacífico</td>
+            <td><span class="ad-rank-score" style="color:var(--risk-critical);">89</span> <span class="ad-rank-badge ad-rank-crit">Crítico</span></td>
+          </tr>
+          <tr>
+            <td style="font-weight:700;color:var(--risk-critical);">4</td>
+            <td class="ad-rank-name">Mpio. de Maicao</td>
+            <td>Municipio</td>
+            <td>Caribe I</td>
+            <td><span class="ad-rank-score" style="color:var(--risk-critical);">87</span> <span class="ad-rank-badge ad-rank-crit">Crítico</span></td>
+          </tr>
+          <tr>
+            <td style="font-weight:700;color:var(--risk-critical);">5</td>
+            <td class="ad-rank-name">Mpio. de El Charco</td>
+            <td>Municipio</td>
+            <td>Pacífico</td>
+            <td><span class="ad-rank-score" style="color:var(--risk-critical);">85</span> <span class="ad-rank-badge ad-rank-crit">Crítico</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</main>
+</div>
 
 <div class="footer">
   Sistema de Análisis de Riesgo – SAR · Departamento Nacional de Planeación · Sistema General de Regalías · Resolución 4574 de 2025
@@ -1141,12 +1988,33 @@ function showResults() {
 function closeModal(e) {
   document.getElementById('modal').classList.remove('open');
 }
+function switchTab(tabId) {
+  // Update nav tabs
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  // Update panels
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  const panel = document.getElementById('tab-' + tabId);
+  if (panel) panel.classList.add('active');
+}
 // Animate bars on load
 window.addEventListener('load', () => {
   document.querySelectorAll('.cap-bar').forEach(b => {
     const w = b.style.width;
     b.style.width = '0%';
     setTimeout(() => { b.style.width = w; }, 300);
+  });
+  // Animate histogram bars
+  document.querySelectorAll('.ad-histo-bar').forEach(b => {
+    const h = b.style.height;
+    b.style.height = '0%';
+    setTimeout(() => { b.style.height = h; }, 400);
+  });
+  // Animate horizontal bars
+  document.querySelectorAll('.ad-hbar-fill').forEach(b => {
+    const w = b.style.width;
+    b.style.width = '0%';
+    setTimeout(() => { b.style.width = w; }, 500);
   });
 });
 </script>
