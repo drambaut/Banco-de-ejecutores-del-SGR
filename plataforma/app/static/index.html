@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAR - Sistema de Analisis de Riesgo | SGR</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <div class="header-logo">
+      <div class="logo-badge">DNP</div>
+      <div class="logo-sep"></div>
+      <div class="logo-badge" style="background:var(--dnp-cyan);color:white;">SGR</div>
+    </div>
+    <div>
+      <div class="header-title">Sistema de Analisis de Riesgo - SAR</div>
+      <div class="header-subtitle">Perfil de riesgo de ejecutores SGR</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="header-badge">Datos reales - ICS v2</div>
+    <div class="header-badge">Resolucion 4574/2025</div>
+    <div class="header-user">SAR</div>
+  </div>
+</header>
+
+<nav class="nav-tabs">
+  <div class="nav-tab active" onclick="switchTab('perfil', event)">Perfil de Riesgo</div>
+  <div class="nav-tab" onclick="switchTab('descriptivo', event)">Analisis Descriptivo</div>
+</nav>
+
+<div class="tab-panel active" id="tab-perfil">
+<main class="main">
+
+  <div class="search-panel">
+    <h2>Consulta de ejecutor</h2>
+    <p>Ingrese el código del ejecutor para calcular su perfil de riesgo ante el SGR.</p>
+    <div class="search-row" style="grid-template-columns: 1fr auto;">
+      <div class="field">
+        <label>Código del ejecutor</label>
+        <input type="text" id="input-codigo" placeholder="Ej: 73000" list="lista-sugerencias" autocomplete="off">
+        <datalist id="lista-sugerencias"></datalist>
+      </div>
+      <button class="btn-primary" onclick="buscarPerfil()">Calcular perfil</button>
+    </div>
+    <div id="mensaje-error" style="display:none;color:var(--risk-critical);font-size:12px;margin-top:8px;"></div>
+  </div>
+
+  <div id="results-section" style="display:none;flex-direction:column;gap:16px;">
+
+    <div class="results-header">
+      <div>
+        <h3 id="res-titulo">Perfil de riesgo</h3>
+        <p id="res-subtitulo">Resultado calculado con base en datos historicos del SGR</p>
+      </div>
+      <div class="results-actions">
+        <button class="btn-outline" onclick="window.print()">Exportar PDF</button>
+      </div>
+    </div>
+
+    <div class="content-grid">
+
+      <div class="entity-card">
+        <div class="entity-card-header">
+          <div class="entity-tag">Ejecutor SGR</div>
+          <div class="entity-name" id="ent-nombre">-</div>
+          <div class="entity-code" id="ent-codigo">-</div>
+        </div>
+        <div class="entity-card-body">
+          <div class="entity-meta">
+            <div class="meta-row">
+              <span class="meta-label">Proyectos ejecutados</span>
+              <span class="meta-value" id="ent-proyectos">-</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Tipo de ejecutor</span>
+              <span class="meta-value" id="ent-tipo">-</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Region</span>
+              <span class="meta-value" id="ent-region">-</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Grupo capacidad institucional</span>
+              <span class="meta-value" id="ent-grupo">-</span>
+            </div>
+          </div>
+
+          <div class="risk-section">
+            <div class="risk-label-top">Indice de riesgo global (ICS)</div>
+            <div class="gauge-wrap">
+              <svg class="gauge-svg" viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
+                <!-- Arco de fondo y segmentos de color: todos sobre el mismo círculo real
+                     (centro 100,100 · radio 80), divididos en 4 franjas simétricas de 45°.
+                     Puntos: 180°(20,100) · 225°(43.43,43.43) · 270°(100,20) · 315°(156.57,43.43) · 360°(180,100) -->
+                <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#e2e6ec" stroke-width="16" stroke-linecap="round"/>
+                <path d="M 20 100 A 80 80 0 0 1 43.43 43.43" fill="none" stroke="#1aad6e" stroke-width="16" stroke-linecap="round"/>
+                <path d="M 43.43 43.43 A 80 80 0 0 1 100 20" fill="none" stroke="#e8a020" stroke-width="16" stroke-linecap="round"/>
+                <path d="M 100 20 A 80 80 0 0 1 156.57 43.43" fill="none" stroke="#e05c2a" stroke-width="16" stroke-linecap="round"/>
+                <path d="M 156.57 43.43 A 80 80 0 0 1 180 100" fill="none" stroke="#c0253a" stroke-width="16" stroke-linecap="round"/>
+                <line id="gauge-needle" x1="100" y1="100" x2="100" y2="32" stroke="#e8a020" stroke-width="3" stroke-linecap="round" opacity="0.85"/>
+                <circle cx="100" cy="100" r="7" fill="#0b2d5e"/>
+                <circle cx="100" cy="100" r="3.5" fill="white"/>
+              </svg>
+              <div class="gauge-center">
+                <div class="gauge-pct" id="gauge-pct">-</div>
+                <div class="gauge-level" id="gauge-level">-</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="alert-box" style="margin-top:14px;">
+            <div class="alert-icon">i</div>
+            <div class="alert-text" id="alert-explicacion">
+              El riesgo se calcula con la metodologia del Indice de Cumplimiento Historico (TBC x Factor de Carga x Penalizacion).
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right-panel">
+
+        <div class="card">
+          <div class="card-title">Componentes del Indice de Cumplimiento Historico</div>
+          <div class="igpr-grid">
+            <div class="igpr-stat">
+              <div class="igpr-stat-label">Tasa Bruta Cumplim. (TBC)</div>
+              <div class="igpr-stat-val" id="comp-tbc">-</div>
+              <div class="igpr-stat-sub" id="comp-tbc-sub">-</div>
+            </div>
+            <div class="igpr-stat">
+              <div class="igpr-stat-label">Factor de Carga (FC)</div>
+              <div class="igpr-stat-val" id="comp-fc">-</div>
+              <div class="igpr-stat-sub" id="comp-fc-sub">-</div>
+            </div>
+            <div class="igpr-stat">
+              <div class="igpr-stat-label">Penalizacion (Pen)</div>
+              <div class="igpr-stat-val" id="comp-pen">-</div>
+              <div class="igpr-stat-sub" id="comp-pen-sub">-</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Perfil de riesgo e idoneidad - Detalle por capacidad</div>
+          <div class="cap-grid" id="cap-grid"></div>
+          <div class="alert-box" style="margin-top:14px;background:#eff6ff;border-color:#93c5fd;">
+            <div class="alert-icon">!</div>
+            <div class="alert-text" style="color:#1e3a5f;">
+              <strong>Nota metodologica:</strong> Capacidad Financiera e Institucional aun no estan integradas
+              (requieren datos de SECOP, patrimonio y entes de control). Solo Administrativa se aproxima hoy a partir del TBC.
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Historial de riesgo por periodo</div>
+          <div class="alert-box">
+            <div class="alert-icon">i</div>
+            <div class="alert-text">
+              Actualmente el sistema solo tiene un corte de datos calculado. La serie historica por vigencia
+              se habilitara automaticamente cuando se acumulen varios cortes del ICS.
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Otras entidades idoneas en el mismo departamento</div>
+          <div class="alt-grid" id="alt-grid"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+
+<div class="tab-panel" id="tab-descriptivo">
+<main class="main">
+
+  <div class="ad-filter-bar">
+    <span class="ad-filter-label">Filtros</span>
+    <div class="field">
+      <label>Tipo de ejecutor</label>
+      <select id="filtro-tipo">
+        <option selected>Todos</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Region</label>
+      <select id="filtro-region">
+        <option selected>Todas</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Departamento</label>
+      <select id="filtro-departamento">
+        <option selected>Todos</option>
+      </select>
+    </div>
+    <button class="btn-primary" onclick="cargarDescriptivo()">Actualizar</button>
+  </div>
+
+  <div class="ad-kpi-row">
+    <div class="ad-kpi">
+      <div class="ad-kpi-value" id="kpi-ejecutores">-</div>
+      <div class="ad-kpi-label">Ejecutores</div>
+      <div class="ad-kpi-sub">en el sistema SGR</div>
+    </div>
+    <div class="ad-kpi">
+      <div class="ad-kpi-value" id="kpi-proyectos">-</div>
+      <div class="ad-kpi-label">Proyectos</div>
+      <div class="ad-kpi-sub">registrados</div>
+    </div>
+    <div class="ad-kpi">
+      <div class="ad-kpi-value" id="kpi-valor">-</div>
+      <div class="ad-kpi-label">Recursos SGR</div>
+      <div class="ad-kpi-sub">bajo seguimiento</div>
+    </div>
+    <div class="ad-kpi">
+      <div class="ad-kpi-value" id="kpi-promedio">-</div>
+      <div class="ad-kpi-label">Puntaje de riesgo prom.</div>
+      <div class="ad-kpi-sub">0-100</div>
+    </div>
+    <div class="ad-kpi kpi-alert">
+      <div class="ad-kpi-value" id="kpi-alto-critico">-</div>
+      <div class="ad-kpi-label">Riesgo alto/critico</div>
+      <div class="ad-kpi-sub" id="kpi-alto-critico-sub">-</div>
+    </div>
+  </div>
+
+  <div class="ad-row ad-row-3-1">
+    <div class="card">
+      <div class="card-title">Distribucion del puntaje de riesgo</div>
+      <div class="ad-histo-wrap">
+        <div class="ad-histo-bars" id="histo-bars"></div>
+      </div>
+      <div class="ad-chips" id="chips-4-bandas"></div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div class="card">
+        <div class="card-title">Riesgo promedio por tipo de ejecutor</div>
+        <div class="ad-hbar-list" id="hbar-tipo"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Riesgo promedio por region</div>
+        <div class="ad-hbar-list" id="hbar-region"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ad-row ad-row-1-1">
+    <div class="card">
+      <div class="card-title">Estado del portafolio de proyectos</div>
+      <div class="ad-donut-area">
+        <div class="ad-donut-chart" id="donut-chart"></div>
+        <div class="ad-donut-legend" id="donut-legend"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Evolucion del score de riesgo promedio</div>
+      <div class="alert-box">
+        <div class="alert-icon">i</div>
+        <div class="alert-text">
+          La serie historica por vigencia se habilitara cuando se acumulen varios cortes del ICS
+          (hoy solo existe el corte actual).
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ad-row ad-row-1-1">
+    <div class="card">
+      <div class="card-title">Ejecutores con menor riesgo - Top 5</div>
+      <table class="ad-rank-table" id="tabla-mejores">
+        <thead><tr><th>#</th><th>Ejecutor</th><th>Tipo</th><th>Region</th><th>Score</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">Ejecutores en alerta critica - Top 5</div>
+      <table class="ad-rank-table" id="tabla-peores">
+        <thead><tr><th>#</th><th>Ejecutor</th><th>Tipo</th><th>Region</th><th>Score</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<div class="footer">
+  Sistema de Analisis de Riesgo - SAR - Departamento Nacional de Planeacion - Sistema General de Regalias - Resolucion 4574 de 2025
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>
