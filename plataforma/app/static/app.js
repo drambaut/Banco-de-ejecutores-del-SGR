@@ -56,13 +56,13 @@ async function buscarPerfil() {
 function renderPerfil(datos) {
   document.getElementById('results-section').style.display = 'flex';
 
-  document.getElementById('res-titulo').textContent = `Perfil de riesgo — ${datos.ejecutor.nombre}`;
+  document.getElementById('res-titulo').textContent = `Perfil de riesgo — Entidad objeto de análisis`;
   document.getElementById('res-subtitulo').textContent =
-    `Código ejecutor: ${datos.ejecutor.codigo_ejecutor} · Metodología ICS v2 (percentil + tau 10%)`;
+    `Código ejecutor: ${datos.ejecutor.codigo_ejecutor} · Metodología ICS`;
 
-  document.getElementById('ent-nombre').textContent = datos.ejecutor.nombre;
+  document.getElementById('ent-nombre').textContent = 'ENTIDAD OBJETO DE ANÁLISIS';
   document.getElementById('ent-codigo').textContent =
-    `Código: ${datos.ejecutor.codigo_ejecutor} · NIT: ${datos.ejecutor.nit || '—'} · ${datos.ejecutor.departamento}`;
+    `Código: ${datos.ejecutor.codigo_ejecutor}`;
   document.getElementById('ent-proyectos').textContent = `${datos.ejecutor.total_proyectos} proyectos`;
   document.getElementById('ent-tipo').textContent = datos.ejecutor.tipo_ejecutor || '—';
   document.getElementById('ent-region').textContent = datos.ejecutor.region || '—';
@@ -77,16 +77,16 @@ function renderPerfil(datos) {
     document.getElementById('gauge-level').textContent = pr.nivel_4_bandas;
     document.getElementById('gauge-level').style.color = colorNivel(pr.nivel_4_bandas);
 
-    // Aguja del gauge: mapea puntaje 0-100 sobre el arco de la media luna.
-    // anguloInicio=180 y anguloFin=360 son los extremos reales del arco de fondo
-    // en el SVG (centro 100,100 · radio 80), expresados sin cruzar 0° para que la
-    // interpolación lineal pase por 270° (arriba) en el punto medio.
-    const anguloInicio = 180, anguloFin = 360;
+    // Aguja del gauge: el arco va de 180° (izquierda, puntaje=0) a 0° (derecha,
+    // puntaje=100), pasando por 90° (arriba, puntaje=50). En SVG el eje Y
+    // crece hacia abajo, por eso "arriba" es -sin(rad), no +sin(rad)
+    // (el signo + era el bug: hacía que la aguja apuntara hacia abajo).
+    const anguloInicio = 180, anguloFin = 0;
     const angulo = anguloInicio + (anguloFin - anguloInicio) * (pr.puntaje / 100);
     const rad = angulo * Math.PI / 180;
-    const cx = 100, cy = 100, largo = 68;
+    const cx = 100, cy = 100, largo = 62;
     const x2 = cx + largo * Math.cos(rad);
-    const y2 = cy + largo * Math.sin(rad);
+    const y2 = cy - largo * Math.sin(rad);
     const needle = document.getElementById('gauge-needle');
     needle.setAttribute('x2', x2.toFixed(1));
     needle.setAttribute('y2', y2.toFixed(1));
@@ -167,7 +167,7 @@ function renderComparables(comparables) {
     <div class="alt-card" onclick="buscarPorCodigoDirecto('${c.codigo_para_buscar}')" style="cursor:pointer;">
       <div class="alt-info">
         <div class="alt-dept">${c.etiqueta}</div>
-        <div class="alt-name">${c.nombre}</div>
+        <div class="alt-name">Código: ${c.codigo_ejecutor}</div>
       </div>
       <div style="display:flex;align-items:center;">
         <div class="alt-score-wrap">
@@ -199,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const datos = await resp.json();
         const lista = document.getElementById('lista-sugerencias');
         lista.innerHTML = datos.resultados
-          .map(r => `<option value="${r.codigo_ejecutor}">${r.nombre || ''}</option>`)
+          .map(r => `<option value="${r.codigo_ejecutor}">Código ${r.codigo_ejecutor}${r.departamento ? ' · ' + r.departamento : ''}</option>`)
           .join('');
       }, 300);
     });
@@ -314,7 +314,7 @@ async function cargarRanking() {
   const filaHtml = (f, i, critico) => `
     <tr>
       <td style="font-weight:700;color:${critico ? 'var(--risk-critical)' : 'var(--risk-low)'};">${i + 1}</td>
-      <td class="ad-rank-name">${f.nombre_ejecutor}</td>
+      <td class="ad-rank-name">Código ${f.codigo_ejecutor}</td>
       <td>${f.tipo_ejecutor || '—'}</td>
       <td>${f.region || '—'}</td>
       <td><span class="ad-rank-score" style="color:${critico ? 'var(--risk-critical)' : 'var(--risk-low)'};">${f.puntaje_riesgo.toFixed(1)}</span></td>

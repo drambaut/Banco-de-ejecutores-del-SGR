@@ -128,7 +128,6 @@ def construir_perfil(con, codigo_ejecutor: str):
             comparables.append({
                 "etiqueta": etiquetas[i] if i < len(etiquetas) else f"{i+1}° Entidad Sugerida",
                 "codigo_ejecutor": fila["codigo_ejecutor"],
-                "nombre": fila["nombre_ejecutor"],
                 "tipo": fila["tipo_ejecutor"],
                 "puntaje": round(fila["puntaje_riesgo"], 1),
                 "nivel": fila["nivel_riesgo"],
@@ -138,7 +137,7 @@ def construir_perfil(con, codigo_ejecutor: str):
     return {
         "ejecutor": {
             "codigo_ejecutor": ejecutor["codigo_ejecutor"],
-            "nombre": ejecutor["nombre_ejecutor"],
+            "etiqueta": "Entidad objeto de análisis",
             "nit": ejecutor["nit"],
             "departamento": ejecutor["departamento"],
             "region": ejecutor["region"],
@@ -147,7 +146,6 @@ def construir_perfil(con, codigo_ejecutor: str):
             "sector_principal": ejecutor["sector_principal"] or "No disponible",
         },
         "proyecto_representativo": ({
-            "nombre": proyecto["nombre_proyecto"] if proyecto["nombre_proyecto"] else "No disponible",
             "estado": proyecto["estado"],
             "valor_total": proyecto["valor_total_proyecto"],
         } if proyecto else None),
@@ -183,7 +181,7 @@ def buscar():
         like = f"%{q}%"
         filas = con.execute(
             """
-            SELECT DISTINCT e.codigo_ejecutor, e.nombre_ejecutor, e.departamento
+            SELECT DISTINCT e.codigo_ejecutor, e.departamento
             FROM ejecutores e
             WHERE e.nombre_ejecutor LIKE ? OR e.nit LIKE ? OR e.codigo_ejecutor LIKE ?
             LIMIT 15
@@ -191,13 +189,11 @@ def buscar():
             (like, like, like),
         ).fetchall()
         resultados = [
-            {"codigo_ejecutor": f["codigo_ejecutor"], "nombre": f["nombre_ejecutor"],
-             "departamento": f["departamento"]}
+            {"codigo_ejecutor": f["codigo_ejecutor"], "departamento": f["departamento"]}
             for f in filas
         ]
         return jsonify({"resultados": resultados})
     finally:
-        con.close()
         con.close()
 
 
@@ -219,14 +215,14 @@ def ranking():
     try:
         mejores = con.execute(
             """
-            SELECT e.nombre_ejecutor, e.tipo_ejecutor, e.region, r.puntaje_riesgo, r.nivel_riesgo
+            SELECT e.codigo_ejecutor, e.tipo_ejecutor, e.region, r.puntaje_riesgo, r.nivel_riesgo
             FROM resultado_ics r JOIN ejecutores e ON e.codigo_ejecutor = r.codigo_ejecutor
             ORDER BY r.puntaje_riesgo ASC LIMIT 5
             """
         ).fetchall()
         peores = con.execute(
             """
-            SELECT e.nombre_ejecutor, e.tipo_ejecutor, e.region, r.puntaje_riesgo, r.nivel_riesgo
+            SELECT e.codigo_ejecutor, e.tipo_ejecutor, e.region, r.puntaje_riesgo, r.nivel_riesgo
             FROM resultado_ics r JOIN ejecutores e ON e.codigo_ejecutor = r.codigo_ejecutor
             ORDER BY r.puntaje_riesgo DESC LIMIT 5
             """
