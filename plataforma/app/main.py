@@ -77,28 +77,31 @@ def construir_perfil(con, codigo_ejecutor: str):
             "puntaje": puntaje,
             "nivel_3_bandas": resultado["nivel_riesgo"],
             "nivel_4_bandas": nivel_4_bandas(puntaje),
-            "tbc": round(resultado["tbc"], 3),
-            "fc": round(resultado["fc"], 3),
-            "pen": round(resultado["pen"], 3),
-            "ics": round(resultado["ics"], 3),
+            "base_e": round(resultado["base_e"], 3),
+            "inc_valor": round(resultado["inc_valor"], 3),
+            "inc_n": round(resultado["inc_n"], 3),
+            "ich": round(resultado["ich"], 3),
             "n_proyectos": int(resultado["n_proyectos"]),
-            "reprogramaciones_no_permitidas": int(resultado["reprogramaciones_no_permitidas"]),
-            "descuento_pct_por_reprogramacion": round(resultado["descuento_pct"], 1),
+            "ve_e": resultado["ve_e"],
+            "vref": resultado["vref"],
             "grupo_capacidad_institucional": ejecutor["capacidad_institucional"],
         }
 
-        tbc_pct = resultado["tbc"] * 100
+        # Base_e ya combina cumplimiento y penalización por reprogramación
+        # ponderados por proyecto (metodología M3); se aproxima a una escala
+        # 0-100 para la caja "Administrativa" de la UI.
+        base_pct = resultado["base_e"] * 100
         capacidades["administrativa"] = {
-            "score": round(tbc_pct),
+            "score": round(base_pct),
             "disponible": True,
             "variables": [
-                {"nombre": "Cumplimiento de metas (TBC)", "puntos": round(tbc_pct)},
-                {"nombre": "Retraso programación mensual", "puntos": round(100 - tbc_pct)},
+                {"nombre": "Cumplimiento ponderado (Base_e)", "puntos": round(base_pct)},
                 {"nombre": "Éxito en contratación", "puntos": None},
                 {"nombre": "Experiencia en el sector", "puntos": None},
             ],
-            "nota": "Aproximado a partir de TBC. 'Éxito en contratación' y "
-                    "'experiencia en el sector' requieren datos de SECOP (pendiente).",
+            "nota": "Aproximado a partir de Base_e (TCP × Pen ponderado por valor de cada "
+                    "proyecto, metodología M3). 'Éxito en contratación' y 'experiencia en el "
+                    "sector' requieren datos de SECOP (pendiente).",
         }
         capacidades["financiera"] = {
             "score": None, "disponible": False,

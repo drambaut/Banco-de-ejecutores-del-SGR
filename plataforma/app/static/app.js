@@ -58,11 +58,11 @@ function renderPerfil(datos) {
 
   document.getElementById('res-titulo').textContent = `Perfil de riesgo — Entidad objeto de análisis`;
   document.getElementById('res-subtitulo').textContent =
-    `Código ejecutor: ${datos.ejecutor.codigo_ejecutor} · Metodología ICS`;
+    `Código ejecutor: ${datos.ejecutor.codigo_ejecutor} · Metodología ICS v2 (percentil + tau 10%)`;
 
   document.getElementById('ent-nombre').textContent = 'ENTIDAD OBJETO DE ANÁLISIS';
   document.getElementById('ent-codigo').textContent =
-    `Código: ${datos.ejecutor.codigo_ejecutor}`;
+    `Código: ${datos.ejecutor.codigo_ejecutor} · NIT: ${datos.ejecutor.nit || '—'} · ${datos.ejecutor.departamento}`;
   document.getElementById('ent-proyectos').textContent = `${datos.ejecutor.total_proyectos} proyectos`;
   document.getElementById('ent-tipo').textContent = datos.ejecutor.tipo_ejecutor || '—';
   document.getElementById('ent-region').textContent = datos.ejecutor.region || '—';
@@ -93,16 +93,16 @@ function renderPerfil(datos) {
     needle.setAttribute('stroke', colorNivel(pr.nivel_4_bandas));
 
     document.getElementById('alert-explicacion').innerHTML =
-      `<strong>${pr.nivel_4_bandas}</strong> — TBC de ${(pr.tbc*100).toFixed(1)}%, ` +
-      `Factor de Carga ${pr.fc.toFixed(2)} (${pr.n_proyectos} proyectos activos), ` +
-      `Penalización ${(pr.pen*100).toFixed(0)}% (${pr.reprogramaciones_no_permitidas} reprogramaciones no permitidas).`;
+      `<strong>${pr.nivel_4_bandas}</strong> — Base ponderada de ${(pr.base_e*100).toFixed(1)}%, ` +
+      `Incidencia de valor ${pr.inc_valor.toFixed(2)}, Incidencia de N° proyectos ${pr.inc_n.toFixed(2)} ` +
+      `(${pr.n_proyectos} proyectos activos).`;
 
-    document.getElementById('comp-tbc').textContent = (pr.tbc * 100).toFixed(1) + '%';
-    document.getElementById('comp-tbc-sub').textContent = 'periodos cumplidos / evaluados';
-    document.getElementById('comp-fc').textContent = pr.fc.toFixed(2);
-    document.getElementById('comp-fc-sub').textContent = `${pr.n_proyectos} proyectos activos`;
-    document.getElementById('comp-pen').textContent = pr.pen.toFixed(2);
-    document.getElementById('comp-pen-sub').textContent = `-${pr.descuento_pct_por_reprogramacion}% por reprogramaciones`;
+    document.getElementById('comp-tbc').textContent = (pr.base_e * 100).toFixed(1) + '%';
+    document.getElementById('comp-tbc-sub').textContent = 'TCP × Pen ponderado por proyecto';
+    document.getElementById('comp-fc').textContent = pr.inc_valor.toFixed(2);
+    document.getElementById('comp-fc-sub').textContent = `Ve = ${pr.ve_e ? pr.ve_e.toLocaleString('es-CO') : '—'}`;
+    document.getElementById('comp-pen').textContent = pr.inc_n.toFixed(2);
+    document.getElementById('comp-pen-sub').textContent = `${pr.n_proyectos} proyectos activos`;
   } else {
     document.getElementById('gauge-pct').textContent = 'N/D';
     document.getElementById('gauge-level').textContent = 'Sin datos';

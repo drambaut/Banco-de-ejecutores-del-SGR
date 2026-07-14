@@ -19,7 +19,7 @@ import pandas as pd
 
 DIR_DATOS = Path(__file__).parent / "data"
 MAESTRO = DIR_DATOS / "EXCEL_MAESTRO_ICS.xlsx"
-RESULTADO = DIR_DATOS / "Resultados_m1.xlsx" # "Resultados_m2.xlsx"
+RESULTADO = DIR_DATOS / "Resultados_m3.xlsx"
 DB_PATH = DIR_DATOS / "sar.db"
 
 
