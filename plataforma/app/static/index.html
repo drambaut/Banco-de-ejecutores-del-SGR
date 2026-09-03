@@ -22,7 +22,7 @@
     </div>
   </div>
   <div class="header-right">
-    <div class="header-badge">Datos reales - ICS v2</div>
+    <div class="header-badge">Datos reales - SAR</div>
     <div class="header-badge">Resolucion 4574/2025</div>
     <div class="header-user">SAR</div>
   </div>
@@ -91,7 +91,7 @@
           </div>
 
           <div class="risk-section">
-            <div class="risk-label-top">Indice de riesgo global (ICS)</div>
+            <div class="risk-label-top">Indice de riesgo global</div>
             <div class="gauge-wrap">
               <svg class="gauge-svg" viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
                 <!-- Arco de fondo y segmentos de color: todos sobre el mismo círculo real
@@ -124,28 +124,7 @@
 
       <div class="right-panel">
 
-        <div class="card">
-          <div class="card-title">Componentes del Indice de Cumplimiento Historico</div>
-          <div class="igpr-grid">
-            <div class="igpr-stat">
-              <div class="igpr-stat-label">Tasa Bruta Cumplim. (TBC)</div>
-              <div class="igpr-stat-val" id="comp-tbc">-</div>
-              <div class="igpr-stat-sub" id="comp-tbc-sub">-</div>
-            </div>
-            <div class="igpr-stat">
-              <div class="igpr-stat-label">Factor de Carga (FC)</div>
-              <div class="igpr-stat-val" id="comp-fc">-</div>
-              <div class="igpr-stat-sub" id="comp-fc-sub">-</div>
-            </div>
-            <div class="igpr-stat">
-              <div class="igpr-stat-label">Penalizacion (Pen)</div>
-              <div class="igpr-stat-val" id="comp-pen">-</div>
-              <div class="igpr-stat-sub" id="comp-pen-sub">-</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
+<div class="card">
           <div class="card-title">Perfil de riesgo e idoneidad - Detalle por capacidad</div>
           <div class="cap-grid" id="cap-grid"></div>
           <div class="alert-box" style="margin-top:14px;background:#eff6ff;border-color:#93c5fd;">
@@ -158,14 +137,8 @@
         </div>
 
         <div class="card">
-          <div class="card-title">Historial de riesgo por periodo</div>
-          <div class="alert-box">
-            <div class="alert-icon">i</div>
-            <div class="alert-text">
-              Actualmente el sistema solo tiene un corte de datos calculado. La serie historica por vigencia
-              se habilitara automaticamente cuando se acumulen varios cortes del ICS.
-            </div>
-          </div>
+          <div class="card-title">Desglose por metodologia</div>
+          <div class="igpr-grid" id="desglose-metodologias"></div>
         </div>
 
         <div class="card">
@@ -268,8 +241,8 @@
       <div class="alert-box">
         <div class="alert-icon">i</div>
         <div class="alert-text">
-          La serie historica por vigencia se habilitara cuando se acumulen varios cortes del ICS
-          (hoy solo existe el corte actual).
+          La serie historica por vigencia se habilitara cuando se acumulen varios cortes de calculo.
+          Hoy solo existe el corte del IV trimestre 2025.
         </div>
       </div>
     </div>

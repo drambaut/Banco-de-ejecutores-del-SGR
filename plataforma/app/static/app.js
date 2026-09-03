@@ -17,8 +17,8 @@ function fmtNumero(n) {
 
 function fmtMoneda(n) {
   if (n === null || n === undefined) return '—';
-  if (n >= 1e12) return '$' + (n / 1e12).toFixed(1) + 'B';
-  if (n >= 1e9) return '$' + (n / 1e9).toFixed(1) + 'MM';
+  if (n >= 1e12) return '$' + (n / 1e12).toFixed(2) + 'B';
+  if (n >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'MM';
   if (n >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
   return '$' + fmtNumero(n);
 }
@@ -26,6 +26,14 @@ function fmtMoneda(n) {
 function colorNivel(nivel) {
   return { 'Bajo': 'var(--risk-low)', 'Medio': 'var(--risk-med)',
            'Alto': 'var(--risk-high)', 'Crítico': 'var(--risk-critical)' }[nivel] || '#888';
+}
+
+function nivel_4_bandas_js(p) {
+  if (p === null || p === undefined) return 'Sin datos';
+  if (p < 30) return 'Bajo';
+  if (p < 60) return 'Medio';
+  if (p < 85) return 'Alto';
+  return 'Crítico';
 }
 
 // ============================ PERFIL DE RIESGO ============================
@@ -58,7 +66,7 @@ function renderPerfil(datos) {
 
   document.getElementById('res-titulo').textContent = `Perfil de riesgo — Entidad objeto de análisis`;
   document.getElementById('res-subtitulo').textContent =
-    `Código ejecutor: ${datos.ejecutor.codigo_ejecutor} · Metodología ICS v2 (percentil + tau 10%)`;
+    `Código ejecutor: ${datos.ejecutor.codigo_ejecutor}`;
 
   document.getElementById('ent-nombre').textContent = 'ENTIDAD OBJETO DE ANÁLISIS';
   document.getElementById('ent-codigo').textContent =
@@ -93,21 +101,31 @@ function renderPerfil(datos) {
     needle.setAttribute('stroke', colorNivel(pr.nivel_4_bandas));
 
     document.getElementById('alert-explicacion').innerHTML =
-      `<strong>${pr.nivel_4_bandas}</strong> — Base ponderada de ${(pr.base_e*100).toFixed(1)}%, ` +
-      `Incidencia de valor ${pr.inc_valor.toFixed(2)}, Incidencia de N° proyectos ${pr.inc_n.toFixed(2)} ` +
-      `(${pr.n_proyectos} proyectos activos).`;
+      `<strong>${pr.nivel_4_bandas}</strong> — Puntaje consolidado de <strong>${pr.puntaje}</strong> ` +
+      `calculado sobre ${pr.n_proyectos} proyectos, promediando los indices ICH, ICCI, IE e IMA.`;
 
-    document.getElementById('comp-tbc').textContent = (pr.base_e * 100).toFixed(1) + '%';
-    document.getElementById('comp-tbc-sub').textContent = 'TCP × Pen ponderado por proyecto';
-    document.getElementById('comp-fc').textContent = pr.inc_valor.toFixed(2);
-    document.getElementById('comp-fc-sub').textContent = `Ve = ${pr.ve_e ? pr.ve_e.toLocaleString('es-CO') : '—'}`;
-    document.getElementById('comp-pen').textContent = pr.inc_n.toFixed(2);
-    document.getElementById('comp-pen-sub').textContent = `${pr.n_proyectos} proyectos activos`;
+    // Desglose por metodología
+    const metodologias = [
+      { nombre: 'ICH',  label: 'Cumplimiento Histórico',   campo: 'puntaje_ich' },
+      { nombre: 'ICCI', label: 'Continuidad de Información', campo: 'puntaje_icci' },
+      { nombre: 'IE',   label: 'Experiencia Sectorial',    campo: 'puntaje_ie' },
+      { nombre: 'IMA',  label: 'Madurez en Ajustes',       campo: 'puntaje_ima' },
+    ];
+    document.getElementById('desglose-metodologias').innerHTML = metodologias.map(m => {
+      const val = pr[m.campo];
+      const valStr = val !== null && val !== undefined ? val.toFixed(1) : '—';
+      const color = val !== null && val !== undefined ? colorNivel(nivel_4_bandas_js(val)) : '#aaa';
+      return `<div class="igpr-stat">
+        <div class="igpr-stat-label">${m.nombre} · ${m.label}</div>
+        <div class="igpr-stat-val" style="color:${color}">${valStr}</div>
+        <div class="igpr-stat-sub">${val !== null && val !== undefined ? nivel_4_bandas_js(val) : 'Sin datos'}</div>
+      </div>`;
+    }).join('');
   } else {
     document.getElementById('gauge-pct').textContent = 'N/D';
     document.getElementById('gauge-level').textContent = 'Sin datos';
     document.getElementById('alert-explicacion').textContent =
-      'Este ejecutor no tiene suficientes periodos evaluables para calcular el ICS.';
+      'Este ejecutor no tiene suficientes periodos evaluables para calcular el indice de riesgo.';
   }
 
   renderCapacidades(datos.capacidades);
@@ -155,27 +173,35 @@ function renderCapacidades(cap) {
   }).join('');
 }
 
-function renderComparables(comparables) {
-  const cont = document.getElementById('alt-grid');
-  if (!comparables || comparables.length === 0) {
-    cont.innerHTML = '<p style="font-size:13px;color:var(--text3);">No hay otras entidades en el mismo departamento con ICS calculado.</p>';
-    return;
-  }
-  // se muestran la 2da y 3ra (si existen), tal como se pidió
-  const aMostrar = comparables.slice(1, 3).length ? comparables.slice(1, 3) : comparables.slice(0, 2);
-  cont.innerHTML = aMostrar.map(c => `
+function tarjetaComparable(c) {
+  const nivel = c.nivel.replace('Riesgo ', '');
+  return `
     <div class="alt-card" onclick="buscarPorCodigoDirecto('${c.codigo_para_buscar}')" style="cursor:pointer;">
       <div class="alt-info">
         <div class="alt-dept">${c.etiqueta}</div>
-        <div class="alt-name">Código: ${c.codigo_ejecutor}</div>
+        <div class="alt-name">Código: ${c.codigo_ejecutor} · ${c.tipo || ''}</div>
       </div>
       <div style="display:flex;align-items:center;">
         <div class="alt-score-wrap">
-          <div class="alt-score" style="color:${colorNivel(c.nivel.replace('Riesgo ',''))}">${c.puntaje}</div>
-          <div class="alt-score-lbl" style="color:${colorNivel(c.nivel.replace('Riesgo ',''))}">${c.nivel}</div>
+          <div class="alt-score" style="color:${colorNivel(nivel)}">${c.puntaje}</div>
+          <div class="alt-score-lbl" style="color:${colorNivel(nivel)}">${c.nivel}</div>
         </div>
       </div>
-    </div>`).join('');
+    </div>`;
+}
+
+function renderComparables(comparables) {
+  const vacio = '<p style="font-size:13px;color:var(--text3);">No hay otras entidades en el mismo departamento con puntaje calculado.</p>';
+
+  // Panel lateral derecho: entidades 2 y 3
+  const contLateral = document.getElementById('alt-grid');
+  if (!comparables || comparables.length === 0) {
+    contLateral.innerHTML = vacio;
+  } else {
+    const laterales = comparables.length > 1 ? comparables.slice(1) : comparables;
+    contLateral.innerHTML = laterales.map(tarjetaComparable).join('');
+  }
+
 }
 
 function buscarPorCodigoDirecto(codigo) {
@@ -210,13 +236,34 @@ document.addEventListener('DOMContentLoaded', () => {
 // ============================ ANÁLISIS DESCRIPTIVO ============================
 
 async function cargarFiltrosDescriptivo() {
-  const resp = await fetch(`${API}/api/departamentos`);
-  const datos = await resp.json();
-  const sel = document.getElementById('filtro-departamento');
-  datos.departamentos.forEach(d => {
+  const [resDept, resTipo, resRegion] = await Promise.all([
+    fetch(`${API}/api/departamentos`),
+    fetch(`${API}/api/tipos`),
+    fetch(`${API}/api/regiones`),
+  ]);
+  const [dataDept, dataTipo, dataRegion] = await Promise.all([
+    resDept.json(), resTipo.json(), resRegion.json(),
+  ]);
+
+  const selDept = document.getElementById('filtro-departamento');
+  dataDept.departamentos.forEach(d => {
     const opt = document.createElement('option');
     opt.value = d; opt.textContent = d;
-    sel.appendChild(opt);
+    selDept.appendChild(opt);
+  });
+
+  const selTipo = document.getElementById('filtro-tipo');
+  dataTipo.tipos.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t; opt.textContent = t;
+    selTipo.appendChild(opt);
+  });
+
+  const selRegion = document.getElementById('filtro-region');
+  dataRegion.regiones.forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r; opt.textContent = r;
+    selRegion.appendChild(opt);
   });
 }
 
@@ -257,7 +304,7 @@ async function cargarDescriptivo() {
   renderHbarList('hbar-tipo', d.promedio_riesgo_por_tipo);
   renderHbarList('hbar-region', d.promedio_riesgo_por_region);
   renderDonut(d.estado_proyectos);
-  cargarRanking();
+  cargarRanking(tipo, region, departamento);
 }
 
 function renderHbarList(idContenedor, datosObj) {
@@ -307,8 +354,9 @@ function renderDonut(estadoProyectos) {
     </div>`).join('');
 }
 
-async function cargarRanking() {
-  const resp = await fetch(`${API}/api/ranking`);
+async function cargarRanking(tipo, region, departamento) {
+  const params = new URLSearchParams({ tipo_ejecutor: tipo || '', region: region || '', departamento: departamento || '' });
+  const resp = await fetch(`${API}/api/ranking?${params}`);
   const d = await resp.json();
 
   const filaHtml = (f, i, critico) => `

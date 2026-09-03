@@ -77,25 +77,29 @@ def construir_perfil(con, codigo_ejecutor: str):
             "puntaje": puntaje,
             "nivel_3_bandas": resultado["nivel_riesgo"],
             "nivel_4_bandas": nivel_4_bandas(puntaje),
-            "base_e": round(resultado["base_e"], 3),
-            "inc_valor": round(resultado["inc_valor"], 3),
-            "inc_n": round(resultado["inc_n"], 3),
-            "ich": round(resultado["ich"], 3),
-            "n_proyectos": int(resultado["n_proyectos"]),
+            "base_e": round(resultado["base_e"], 3) if resultado["base_e"] is not None else None,
+            "inc_valor": round(resultado["inc_valor"], 3) if resultado["inc_valor"] is not None else None,
+            "inc_n": round(resultado["inc_n"], 3) if resultado["inc_n"] is not None else None,
+            "ich": round(resultado["ich"], 3) if resultado["ich"] is not None else None,
+            "n_proyectos": int(resultado["n_proyectos"]) if resultado["n_proyectos"] is not None else 0,
             "ve_e": resultado["ve_e"],
             "vref": resultado["vref"],
             "grupo_capacidad_institucional": ejecutor["capacidad_institucional"],
+            "puntaje_ich":  round(resultado["puntaje_ich"],  1) if resultado["puntaje_ich"]  is not None else None,
+            "puntaje_icci": round(resultado["puntaje_icci"], 1) if resultado["puntaje_icci"] is not None else None,
+            "puntaje_ie":   round(resultado["puntaje_ie"],   1) if resultado["puntaje_ie"]   is not None else None,
+            "puntaje_ima":  round(resultado["puntaje_ima"],  1) if resultado["puntaje_ima"]  is not None else None,
         }
 
         # Base_e ya combina cumplimiento y penalización por reprogramación
         # ponderados por proyecto (metodología M3); se aproxima a una escala
         # 0-100 para la caja "Administrativa" de la UI.
-        base_pct = resultado["base_e"] * 100
+        base_pct = resultado["base_e"] * 100 if resultado["base_e"] is not None else None
         capacidades["administrativa"] = {
-            "score": round(base_pct),
-            "disponible": True,
+            "score": round(base_pct) if base_pct is not None else None,
+            "disponible": base_pct is not None,
             "variables": [
-                {"nombre": "Cumplimiento ponderado (Base_e)", "puntos": round(base_pct)},
+                {"nombre": "Cumplimiento ponderado (Base_e)", "puntos": round(base_pct) if base_pct is not None else None},
                 {"nombre": "Éxito en contratación", "puntos": None},
                 {"nombre": "Experiencia en el sector", "puntos": None},
             ],
@@ -214,26 +218,60 @@ def departamentos():
 
 @app.route("/api/ranking")
 def ranking():
+    tipo_ejecutor = request.args.get("tipo_ejecutor")
+    region        = request.args.get("region")
+    departamento  = request.args.get("departamento")
+
     con = conectar()
     try:
-        mejores = con.execute(
-            """
+        filtros = []
+        params: list = []
+        if tipo_ejecutor and tipo_ejecutor != "Todos":
+            filtros.append("e.tipo_ejecutor = ?")
+            params.append(tipo_ejecutor)
+        if region and region != "Todas":
+            filtros.append("e.region = ?")
+            params.append(region)
+        if departamento and departamento != "Todos":
+            filtros.append("e.departamento = ?")
+            params.append(departamento)
+        where = f"WHERE {' AND '.join(filtros)}" if filtros else ""
+
+        base_sql = f"""
             SELECT e.codigo_ejecutor, e.tipo_ejecutor, e.region, r.puntaje_riesgo, r.nivel_riesgo
             FROM resultado_ics r JOIN ejecutores e ON e.codigo_ejecutor = r.codigo_ejecutor
-            ORDER BY r.puntaje_riesgo ASC LIMIT 5
-            """
-        ).fetchall()
-        peores = con.execute(
-            """
-            SELECT e.codigo_ejecutor, e.tipo_ejecutor, e.region, r.puntaje_riesgo, r.nivel_riesgo
-            FROM resultado_ics r JOIN ejecutores e ON e.codigo_ejecutor = r.codigo_ejecutor
-            ORDER BY r.puntaje_riesgo DESC LIMIT 5
-            """
-        ).fetchall()
+            {where}
+        """
+        mejores = con.execute(base_sql + " ORDER BY r.puntaje_riesgo ASC  LIMIT 5", params).fetchall()
+        peores  = con.execute(base_sql + " ORDER BY r.puntaje_riesgo DESC LIMIT 5", params).fetchall()
         return jsonify({
             "mejores": [dict(f) for f in mejores],
-            "peores": [dict(f) for f in peores],
+            "peores":  [dict(f) for f in peores],
         })
+    finally:
+        con.close()
+
+
+@app.route("/api/tipos")
+def tipos():
+    con = conectar()
+    try:
+        filas = con.execute(
+            "SELECT DISTINCT tipo_ejecutor FROM ejecutores WHERE tipo_ejecutor IS NOT NULL ORDER BY tipo_ejecutor"
+        ).fetchall()
+        return jsonify({"tipos": [f["tipo_ejecutor"] for f in filas]})
+    finally:
+        con.close()
+
+
+@app.route("/api/regiones")
+def regiones():
+    con = conectar()
+    try:
+        filas = con.execute(
+            "SELECT DISTINCT region FROM ejecutores WHERE region IS NOT NULL ORDER BY region"
+        ).fetchall()
+        return jsonify({"regiones": [f["region"] for f in filas]})
     finally:
         con.close()
 
@@ -296,10 +334,19 @@ def descriptivo():
             por_region.setdefault(r, []).append(f["puntaje_riesgo"])
         promedio_por_region = {r: round(sum(v) / len(v), 1) for r, v in por_region.items()}
 
-        total_proyectos = con.execute("SELECT COUNT(*) as n FROM proyectos").fetchone()["n"]
-        valor_total = con.execute("SELECT SUM(valor_total_proyecto) as v FROM proyectos").fetchone()["v"]
+        codigos_filtrados = [f["codigo_ejecutor"] for f in filas]
+        placeholders = ",".join("?" * len(codigos_filtrados))
+        total_proyectos = con.execute(
+            f"SELECT COUNT(*) as n FROM proyectos WHERE codigo_ejecutor IN ({placeholders})",
+            codigos_filtrados,
+        ).fetchone()["n"]
+        valor_total = con.execute(
+            f"SELECT SUM(valor_total_proyecto) as v FROM proyectos WHERE codigo_ejecutor IN ({placeholders})",
+            codigos_filtrados,
+        ).fetchone()["v"]
         estado_counts = con.execute(
-            "SELECT estado, COUNT(*) as n FROM proyectos GROUP BY estado"
+            f"SELECT estado, COUNT(*) as n FROM proyectos WHERE codigo_ejecutor IN ({placeholders}) GROUP BY estado",
+            codigos_filtrados,
         ).fetchall()
 
         return jsonify({

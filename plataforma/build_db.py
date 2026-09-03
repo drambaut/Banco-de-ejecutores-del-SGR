@@ -2,8 +2,7 @@
 build_db.py — Construye la base de datos SQLite que consume la plataforma SAR.
 
 Fuentes:
-    data/EXCEL_MAESTRO_ICS.xlsx        -> hojas Ejecutores, Proyectos
-    data/Resultado_ICS_v2_corregido.xlsx -> resultado del ICS (metodología v2)
+    data/Resultados_consolidado.xlsx   -> hojas Ejecutores, Proyectos, Resultados
 
 Salida:
     data/sar.db  (SQLite)
@@ -18,15 +17,14 @@ from pathlib import Path
 import pandas as pd
 
 DIR_DATOS = Path(__file__).parent / "data"
-MAESTRO = DIR_DATOS / "EXCEL_MAESTRO_ICS.xlsx"
-RESULTADO = DIR_DATOS / "Resultados_m3.xlsx"
+CONSOLIDADO = DIR_DATOS / "Resultados_consolidado.xlsx"
 DB_PATH = DIR_DATOS / "sar.db"
 
 
 def construir_bd():
-    ejecutores = pd.read_excel(MAESTRO, sheet_name="Ejecutores", dtype={"codigo_ejecutor": str})
-    proyectos = pd.read_excel(MAESTRO, sheet_name="Proyectos", dtype={"bpin": str, "codigo_ejecutor": str})
-    resultado = pd.read_excel(RESULTADO, dtype={"codigo_ejecutor": str})
+    ejecutores = pd.read_excel(CONSOLIDADO, sheet_name="Ejecutores", dtype={"codigo_ejecutor": str})
+    proyectos = pd.read_excel(CONSOLIDADO, sheet_name="Proyectos", dtype={"bpin": str, "codigo_ejecutor": str})
+    resultado = pd.read_excel(CONSOLIDADO, sheet_name="Resultados", dtype={"codigo_ejecutor": str})
 
     # columnas opcionales que pueden no existir todavía en el maestro (se agregan
     # cuando se re-corra etl_normalizar_excels.py sobre el Balance completo)
