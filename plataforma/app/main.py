@@ -103,9 +103,7 @@ def construir_perfil(con, codigo_ejecutor: str):
                 {"nombre": "Éxito en contratación", "puntos": None},
                 {"nombre": "Experiencia en el sector", "puntos": None},
             ],
-            "nota": "Aproximado a partir de Base_e (TCP × Pen ponderado por valor de cada "
-                    "proyecto, metodología M3). 'Éxito en contratación' y 'experiencia en el "
-                    "sector' requieren datos de SECOP (pendiente).",
+            "nota": "Requieren datos de SECOP.",
         }
         capacidades["financiera"] = {
             "score": None, "disponible": False,

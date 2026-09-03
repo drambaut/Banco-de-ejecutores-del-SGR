@@ -108,7 +108,7 @@ function renderPerfil(datos) {
     const metodologias = [
       { nombre: 'ICH',  label: 'Cumplimiento Histórico',   campo: 'puntaje_ich' },
       { nombre: 'ICCI', label: 'Continuidad de Información', campo: 'puntaje_icci' },
-      { nombre: 'IE',   label: 'Experiencia Sectorial',    campo: 'puntaje_ie' },
+      { nombre: 'IE',   label: 'Índice de Experiencia',    campo: 'puntaje_ie' },
       { nombre: 'IMA',  label: 'Madurez en Ajustes',       campo: 'puntaje_ima' },
     ];
     document.getElementById('desglose-metodologias').innerHTML = metodologias.map(m => {
