@@ -89,6 +89,7 @@ def construir_perfil(con, codigo_ejecutor: str):
             "puntaje_icci": round(resultado["puntaje_icci"], 1) if resultado["puntaje_icci"] is not None else None,
             "puntaje_ie":   round(resultado["puntaje_ie"],   1) if resultado["puntaje_ie"]   is not None else None,
             "puntaje_ima":  round(resultado["puntaje_ima"],  1) if resultado["puntaje_ima"]  is not None else None,
+            "puntaje_iag":  round(resultado["puntaje_iag"],  1) if resultado["puntaje_iag"]  is not None else None,
         }
 
         # Base_e ya combina cumplimiento y penalización por reprogramación

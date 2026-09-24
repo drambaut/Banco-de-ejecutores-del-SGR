@@ -102,7 +102,8 @@ function renderPerfil(datos) {
 
     document.getElementById('alert-explicacion').innerHTML =
       `<strong>${pr.nivel_4_bandas}</strong> — Puntaje consolidado de <strong>${pr.puntaje}</strong> ` +
-      `calculado sobre ${pr.n_proyectos} proyectos, promediando los indices ICH, ICCI, IE e IMA.`;
+      `calculado sobre ${pr.n_proyectos} proyectos, promediando los indices ICH, ICCI, IE, IMA e IAG ` +
+      `(solo con las variables disponibles para este ejecutor).`;
 
     // Desglose por metodología
     const metodologias = [
@@ -110,6 +111,7 @@ function renderPerfil(datos) {
       { nombre: 'ICCI', label: 'Continuidad de Información', campo: 'puntaje_icci' },
       { nombre: 'IE',   label: 'Índice de Experiencia',    campo: 'puntaje_ie' },
       { nombre: 'IMA',  label: 'Madurez en Ajustes',       campo: 'puntaje_ima' },
+      { nombre: 'IAG',  label: 'Alertas de Gestión',       campo: 'puntaje_iag' },
     ];
     document.getElementById('desglose-metodologias').innerHTML = metodologias.map(m => {
       const val = pr[m.campo];
