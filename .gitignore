@@ -1,0 +1,6 @@
+Datos/
+datos/
+.DS_Store
+__pycache__/
+*.pyc
+plataforma/data/sar.db

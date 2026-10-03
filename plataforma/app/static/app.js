@@ -1,377 +1,175 @@
-// app.js — lógica de la plataforma SAR: fetch a la API y render en el DOM.
-
-const API = "";
-
-function switchTab(tabId, event) {
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  if (event) event.currentTarget.classList.add('active');
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('tab-' + tabId).classList.add('active');
-  if (tabId === 'descriptivo') cargarDescriptivo();
+const BANDAS=[{max:30,nombre:'Bajo',color:'#0f6e6a',bg:'#e9f6f4'},{max:60,nombre:'Medio',color:'#c9962c',bg:'#fff7df'},{max:85,nombre:'Alto',color:'#c2562a',bg:'#fff0e8'},{max:101,nombre:'Crítico',color:'#c23b3b',bg:'#fdeeee'}];let resultadosBusqueda=[],entidadActual=null;
+const banda=p=>BANDAS.find(b=>p<b.max)||BANDAS[3],fmtNumero=n=>n==null?'—':new Intl.NumberFormat('es-CO').format(n),fmtMoneda=n=>{if(n==null||!Number.isFinite(Number(n)))return'—';const v=Number(n);if(v>=1e12)return'$'+(v/1e12).toLocaleString('es-CO',{minimumFractionDigits:2,maximumFractionDigits:2})+' billones COP';if(v>=1e9)return'$'+(v/1e9).toLocaleString('es-CO',{minimumFractionDigits:1,maximumFractionDigits:1})+' mil millones COP';if(v>=1e6)return'$'+(v/1e6).toLocaleString('es-CO',{minimumFractionDigits:1,maximumFractionDigits:1})+' millones COP';return'$'+fmtNumero(v)+' COP'},esc=s=>String(s||'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+async function cargarCatalogos(){const [d,t,r]=await Promise.all(['/api/departamentos','/api/tipos','/api/regiones'].map(u=>fetch(u).then(x=>x.json())));[['filtro-departamento',d.departamentos],['filtro-tipo',t.tipos],['filtro-region',r.regiones]].forEach(([id,items])=>items.forEach(x=>document.getElementById(id).add(new Option(x,x))));}
+function parametrosBusqueda(){const p=new URLSearchParams(),q=document.getElementById('input-codigo').value.trim();if(q)p.set('q',q);[['departamento','filtro-departamento'],['region','filtro-region'],['tipo_ejecutor','filtro-tipo']].forEach(([k,id])=>{const v=document.getElementById(id).value;if(v)p.set(k,v)});return p;}
+function mostrarResultados(items){const box=document.getElementById('sugerencias');resultadosBusqueda=items;box.innerHTML=items.map(x=>`<button data-codigo="${esc(x.codigo_ejecutor)}"><b>${esc(x.nombre_ejecutor||x.codigo_ejecutor)}</b><br><span>Código ${esc(x.codigo_ejecutor)} · ${esc(x.departamento||'Sin departamento')} · ${esc(x.tipo_ejecutor||'')}</span></button>`).join('')||'<div class="search-state">No se encontraron entidades con los criterios seleccionados.</div>';box.classList.add('show');box.querySelectorAll('[data-codigo]').forEach(b=>b.onclick=()=>cargarPerfil(b.dataset.codigo));}
+async function buscarSugerencias(){const q=document.getElementById('input-codigo').value.trim(),p=parametrosBusqueda(),box=document.getElementById('sugerencias');if(q.length===1||!p.toString()){box.classList.remove('show');return;}box.innerHTML='<div class="search-state">Buscando entidades…</div>';box.classList.add('show');try{mostrarResultados((await fetch(`/api/buscar?${p}`).then(r=>r.json())).resultados)}catch{box.innerHTML='<div class="search-state error-state">No fue posible realizar la búsqueda.</div>';}}
+async function ejecutarConsulta(){const p=parametrosBusqueda(),box=document.getElementById('sugerencias'),err=document.getElementById('mensaje-error');if(!p.toString()){err.textContent='Ingrese un criterio de búsqueda o seleccione un filtro.';err.hidden=false;return;}err.hidden=true;box.innerHTML='<div class="search-state">Buscando entidades…</div>';box.classList.add('show');try{const d=await fetch(`/api/buscar?${p}`).then(r=>r.json());if(d.resultados.length===1)cargarPerfil(d.resultados[0].codigo_ejecutor);else mostrarResultados(d.resultados)}catch{box.innerHTML='<div class="search-state error-state">No fue posible realizar la búsqueda.</div>';}}
+async function cargarPerfil(codigo){const err=document.getElementById('mensaje-error');err.hidden=true;try{const r=await fetch(`/api/perfil/${encodeURIComponent(codigo)}`);if(!r.ok)throw new Error((await r.json()).error);const d=await r.json();document.getElementById('input-codigo').value=codigo;document.getElementById('sugerencias').classList.remove('show');renderPerfil(d)}catch(e){err.textContent=e.message||'No fue posible consultar el perfil.';err.hidden=false;}}
+function renderPerfil(d){entidadActual=d;const e=d.ejecutor,p=d.perfil_riesgo;document.getElementById('search-card').hidden=true;document.getElementById('search-summary').hidden=false;document.getElementById('resultado').hidden=false;document.getElementById('consulta-resumen').textContent=`${e.nombre_ejecutor||e.codigo_ejecutor} · código ${e.codigo_ejecutor}`;document.getElementById('ent-nombre').textContent=e.nombre_ejecutor||'Entidad sin nombre disponible';document.getElementById('ent-tipo').textContent=`${e.tipo_ejecutor||'Ejecutor'} · entidad con histórico en el SGR`;document.getElementById('ent-codigo').textContent=e.codigo_ejecutor;document.getElementById('ent-nit').textContent=e.nit||'No disponible';document.getElementById('ent-domicilio').textContent=[e.departamento,e.region].filter(Boolean).join(', ')||'No disponible';if(p){const b=banda(p.puntaje),fill=document.getElementById('gauge-fill');document.getElementById('hero-level').textContent='Riesgo '+b.nombre.toLowerCase();document.getElementById('hero-level').style.cssText=`color:${b.color};background:${b.bg}`;document.getElementById('score-num').textContent=p.puntaje.toFixed(1);document.getElementById('score-level').textContent='Riesgo '+b.nombre.toLowerCase();document.getElementById('score-level').style.color=b.color;fill.setAttribute('stroke',b.color);fill.setAttribute('stroke-dasharray',`${p.puntaje} 100`);document.getElementById('scale').innerHTML=BANDAS.map((x,i)=>`<div style="${x===b?`background:${x.bg};border-color:${x.color};color:${x.color}`:''}"><b>${i?BANDAS[i-1].max:0}–${i===3?100:x.max}</b><span>${x.nombre}</span></div>`).join('');renderVariables(p)}else document.getElementById('vars-body').innerHTML='<tr><td colspan="4">El ejecutor no cuenta con resultado consolidado.</td></tr>';renderPortafolio(d.portafolio);renderDepartamento(e);renderIgpr(d.igpr);renderComparables(d.comparables,e,p);document.getElementById('resultado').scrollIntoView({behavior:'smooth',block:'start'});}
+function renderVariables(p){const vs=[['ICH','Índice de cumplimiento histórico','puntaje_ich'],['ICCI','Índice de continuidad y calidad de información','puntaje_icci'],['IE','Índice de experiencia','puntaje_ie'],['IMA','Índice de magnitud de ajustes','puntaje_ima'],['IAG','Índice de alertas de gestión','puntaje_iag']];document.getElementById('explain-lead').textContent='Los cinco indicadores permiten examinar las distintas dimensiones del perfil de riesgo de la entidad. Sus valores se presentan sin inferir pesos, fórmulas ni aportes individuales.';document.getElementById('vars-body').innerHTML=vs.map(([s,n,k])=>{const v=p[k],b=v==null?null:banda(v);return `<tr><td class="var-name"><b>${s}</b><span>${n}</span></td><td>${v==null?'No disponible':v.toFixed(1)}</td><td>${b?`<span class="chip" style="color:${b.color};background:${b.bg}">${b.nombre}</span>`:'—'}</td></tr>`}).join('');document.getElementById('vars-total').textContent=p.puntaje.toFixed(1)+' pts';}
+function renderPortafolio(p){document.getElementById('port-proyectos').textContent=fmtNumero(p.total_proyectos);document.getElementById('port-valor').textContent=fmtMoneda(p.valor_total);document.getElementById('port-sectores').textContent=fmtNumero(p.por_sector.length);const c=['#1d3157','#c9962c','#6b4fa0','#0f6e6a','#c2562a'];document.getElementById('estado-stack').innerHTML=p.por_estado.map((x,i)=>`<div style="width:${p.valor_total?x.valor/p.valor_total*100:0}%;background:${c[i%c.length]}"></div>`).join('');document.getElementById('estado-legend').innerHTML=p.por_estado.map((x,i)=>`<div class="legend-item" style="border-color:${c[i%c.length]}"><b>${esc(x.nombre)}</b>${fmtMoneda(x.valor)}<br><span>${fmtNumero(x.proyectos)} proyectos · ${(p.valor_total?x.valor/p.valor_total*100:0).toFixed(1)} %</span></div>`).join('');document.getElementById('sectores-lista').innerHTML=p.por_sector.map((x,i)=>`<div class="hbar"><span>${esc(x.nombre)}</span><div class="track"><div class="fill" style="width:${p.valor_total?x.valor/p.valor_total*100:0}%;background:${c[i%c.length]}"></div></div><span class="amount"><b>${(p.valor_total?x.valor/p.valor_total*100:0).toFixed(1)} %</b> · ${fmtMoneda(x.valor)}</span></div>`).join('');}
+function renderComparables(xs,e,p){document.getElementById('alternativas-titulo').textContent=`4. Alternativas de ejecución${e.departamento?' en '+e.departamento:''}`;const comparables=xs?.length?xs.map((x,i)=>{const b=banda(x.puntaje),d=p?x.puntaje-p.puntaje:null;return `<tr><td>${i+1}</td><td><b>${esc(x.nombre_ejecutor||x.codigo_ejecutor)}</b><br><small>${esc(x.tipo||'')} · código ${esc(x.codigo_ejecutor)}</small></td><td>${x.puntaje.toFixed(1)}</td><td><span class="chip" style="color:${b.color};background:${b.bg}">${b.nombre}</span></td><td>${d==null?'—':(d>0?'+':'')+d.toFixed(1)+' pts'}</td></tr>`}).join(''):'<tr><td colspan="5">No hay entidades comparables disponibles.</td></tr>';const b=p?banda(p.puntaje):null,referencia=`<tr class="rank-reference"><td>—</td><td><b>${esc(e.nombre_ejecutor||e.codigo_ejecutor)}</b><br><small>${esc(e.tipo_ejecutor||'')} · código ${esc(e.codigo_ejecutor)}</small></td><td>${p?p.puntaje.toFixed(1):'—'}</td><td>${b?`<span class="chip" style="color:${b.color};background:${b.bg}">${b.nombre}</span>`:'—'}</td><td>—</td></tr>`;document.getElementById('rank-body').innerHTML=comparables+referencia;}
+function mostrarPanel(nombre){['perfil','ocad'].forEach(x=>{const on=x===nombre;document.getElementById('panel-'+x).hidden=!on;document.getElementById('tab-'+x).classList.toggle('active',on);document.getElementById('tab-'+x).setAttribute('aria-selected',String(on))});window.scrollTo({top:0,behavior:'smooth'});}
+function tipoEntidad(nuevo){const historico=nuevo==='existentes';document.getElementById('btn-existentes').setAttribute('aria-pressed',String(historico));document.getElementById('btn-nuevas').setAttribute('aria-pressed',String(!historico));document.getElementById('busqueda-historica').hidden=!historico;document.getElementById('busqueda-nueva').hidden=historico;document.getElementById('type-note').textContent=historico?'Busque por código, NIT o nombre. Los resultados corresponden a entidades con histórico en el SGR.':'Las entidades sin histórico requieren información adicional que aún no está integrada en la plataforma.';}
+function limpiarBusqueda(){document.getElementById('input-codigo').value='';['filtro-departamento','filtro-region','filtro-tipo'].forEach(id=>document.getElementById(id).value='');resultadosBusqueda=[];document.getElementById('sugerencias').classList.remove('show');document.getElementById('mensaje-error').hidden=true;}
+function restablecerConsulta(){entidadActual=null;document.getElementById('search-card').hidden=false;document.getElementById('search-summary').hidden=true;document.getElementById('resultado').hidden=true;document.getElementById('consulta-resumen').textContent='—';limpiarBusqueda();restablecerOcad();}
+document.addEventListener('DOMContentLoaded',()=>{cargarCatalogos().catch(()=>{});restablecerConsulta();let t;document.getElementById('input-codigo').addEventListener('input',()=>{clearTimeout(t);t=setTimeout(buscarSugerencias,250)});['filtro-departamento','filtro-region','filtro-tipo'].forEach(id=>document.getElementById(id).addEventListener('change',buscarSugerencias));document.getElementById('btn-buscar').onclick=ejecutarConsulta;document.getElementById('btn-nueva-consulta').onclick=()=>{restablecerConsulta();document.getElementById('input-codigo').focus()};document.getElementById('btn-existentes').onclick=()=>tipoEntidad('existentes');document.getElementById('btn-nuevas').onclick=()=>tipoEntidad('nuevas');document.getElementById('tab-perfil').onclick=()=>mostrarPanel('perfil');document.getElementById('tab-ocad').onclick=()=>mostrarPanel('ocad');document.getElementById('ocad-ver-perfil').onclick=()=>mostrarPanel('perfil');const clear=document.createElement('button');clear.className='btn ghost clear-search';clear.textContent='Limpiar filtros';clear.onclick=limpiarBusqueda;document.querySelector('.search-actions').append(clear);document.addEventListener('click',e=>{if(!e.target.closest('.field.wide'))document.getElementById('sugerencias').classList.remove('show')});});
+/* Correcciones de fidelidad MIEE: estructura visual sin datos demostrativos. */
+function renderVariables(p){
+  const nombres={ICH:'Índice de cumplimiento histórico',ICCI:'Índice de continuidad y calidad de información',IE:'Índice de experiencia',IMA:'Índice de magnitud de ajustes',IAG:'Índice de alertas de gestión'};
+  const filas=p.desglose_indicadores||[];
+  const puntaje=Number(p.puntaje_preciso??p.puntaje),conAporte=filas.filter(x=>Number.isFinite(x.aporte)),n=conAporte.length,proporcionValida=Number.isFinite(puntaje)&&puntaje>0;
+  const mayor=n?Math.max(...conAporte.map(x=>x.aporte)):null,dominantes=conAporte.filter(x=>Math.abs(x.aporte-mayor)<1e-10);
+  const explicacion=!n?'No hay indicadores disponibles para explicar el puntaje consolidado.':!proporcionValida?`El puntaje consolidado corresponde al promedio de los ${n} indicadores disponibles. No es posible expresar contribuciones relativas para este resultado.`:dominantes.length===1?`El puntaje consolidado de ${puntaje.toFixed(1)} corresponde al promedio de los ${n} indicadores disponibles. El ${dominantes[0].sigla} presenta la mayor contribución, con aproximadamente ${(dominantes[0].aporte/puntaje*100).toFixed(1)} % del puntaje total.`:`El puntaje consolidado de ${puntaje.toFixed(1)} corresponde al promedio de los ${n} indicadores disponibles. ${dominantes.map(x=>x.sigla).join(' y ')} comparten la mayor contribución.`;
+  document.getElementById('explain-lead').textContent=explicacion;
+  document.getElementById('vars-body').innerHTML=filas.map(x=>{const participacion=proporcionValida&&Number.isFinite(x.aporte)?x.aporte/puntaje*100:null;return `<tr><td class="var-name"><b>${x.sigla}</b><span>${nombres[x.sigla]}</span></td><td>${x.valor==null?'No disponible':x.valor.toFixed(1)}</td><td>${x.peso==null?'—':(x.peso*100).toFixed(1)+' %'}</td><td class="contribution-cell">${x.aporte==null?'—':`<span class="contribution-bar" aria-hidden="true"><i style="width:${Math.max(0,Math.min(100,participacion??0))}%"></i></span><span>${x.aporte.toFixed(1)} pts${participacion==null?'':` · ${participacion.toFixed(1)} %`}</span>`}</td></tr>`}).join('');
+  document.getElementById('vars-total').textContent=(p.puntaje_preciso??p.puntaje).toFixed(1)+' pts';
 }
-
-function fmtNumero(n) {
-  if (n === null || n === undefined) return '—';
-  return new Intl.NumberFormat('es-CO').format(n);
+function renderDepartamento(e,p){const body=document.getElementById('departamentos-body'),note=document.getElementById('departamentos-note'),portafolio=p||entidadActual?.portafolio;if(!body)return;const filas=portafolio?.por_departamento||[],total=Number(portafolio?.valor_territorial_total);body.innerHTML=filas.length?filas.map(x=>{const porcentaje=Number.isFinite(total)&&total>0?Number(x.valor_total)/total*100:null;const domicilio=x.departamento===e.departamento?'<span class="chip domicile-chip">Domicilio</span>':'';return `<tr><td>${esc(x.departamento)} ${domicilio}</td><td>${fmtNumero(x.proyectos)}</td><td>${fmtMoneda(x.valor_total)}</td><td>${porcentaje==null?'—':porcentaje.toFixed(1)+' %'}</td></tr>`}).join(''):'<tr><td colspan="4">No hay localizaciones territoriales clasificables para los proyectos asociados.</td></tr>';if(note)note.textContent=`Los valores territoriales se calculan sobre ${fmtNumero(portafolio?.proyectos_unidepartamentales)} proyectos con asignación departamental única. ${fmtNumero(portafolio?.proyectos_multidepartamentales)} proyecto(s) multidepartamental(es) se excluyen del valor y del porcentaje. Los conteos corresponden a BPIN únicos y no son necesariamente aditivos.${portafolio?.proyectos_sin_localizacion?` ${fmtNumero(portafolio.proyectos_sin_localizacion)} proyecto(s) sin localización clasificable.`:''}`;}
+function renderIgpr(igpr){
+  const val=document.getElementById('igpr-final'),avg=document.getElementById('igpr-promedio'),rec=document.getElementById('igpr-recursos'),note=document.getElementById('igpr-note'),point=document.getElementById('igpr-point'),pointLabel=document.getElementById('igpr-point-label'),chartMessage=document.getElementById('igpr-chart-message');
+  if(!val)return;
+  const calificacion=Number(igpr?.igpr_final_entidad),disponible=Number.isFinite(calificacion);
+  if(!disponible){val.textContent='Información no disponible';avg.textContent='—';rec.textContent='—';note.textContent='No hay información disponible para el IV trimestre de 2025.';if(point){point.hidden=true;point.style.removeProperty('bottom')}if(pointLabel)pointLabel.textContent='';if(chartMessage)chartMessage.textContent='No hay información disponible para el IV trimestre de 2025.';return}
+  val.textContent=calificacion.toFixed(1)+' puntos';avg.textContent=Number.isFinite(Number(igpr.promedio_igpr_proyectos_medidos))?'Promedio de proyectos medidos: '+Number(igpr.promedio_igpr_proyectos_medidos).toFixed(1):'Promedio de proyectos medidos: —';rec.textContent=fmtMoneda(igpr.recursos_sgr_proyectos_medidos);note.textContent='Periodo de referencia: IV trimestre de 2025. Recursos correspondientes únicamente a proyectos medidos.';
+  if(point){const valor=Math.max(0,Math.min(100,calificacion));point.hidden=false;point.style.bottom=`${valor}%`;pointLabel.textContent=calificacion.toFixed(1);}if(chartMessage)chartMessage.textContent='Información disponible: IV trimestre de 2025. Los demás periodos están pendientes de actualización.';
 }
-
-function fmtMoneda(n) {
-  if (n === null || n === undefined) return '—';
-  if (n >= 1e12) return '$' + (n / 1e12).toFixed(2) + 'B';
-  if (n >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'MM';
-  if (n >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
-  return '$' + fmtNumero(n);
+function renderPortafolio(p){
+  document.getElementById('port-proyectos').textContent=fmtNumero(p.total_proyectos);document.getElementById('port-valor').textContent=fmtMoneda(p.valor_total);document.getElementById('port-sectores').textContent=fmtMoneda(p.valor_sgr);
+  const sgrCard=document.getElementById('port-sectores').parentElement;sgrCard.querySelector('.l').textContent='Valor financiado con recursos SGR';let note=sgrCard.querySelector('.s');if(!note){note=document.createElement('div');note.className='s';sgrCard.append(note)}const porcentaje=Number.isFinite(Number(p.valor_sgr))&&Number.isFinite(Number(p.valor_total))&&Number(p.valor_total)>0?100*Number(p.valor_sgr)/Number(p.valor_total):null;note.textContent=`Cobertura: ${fmtNumero(p.proyectos_con_valor_sgr)} de ${fmtNumero(p.total_proyectos)} proyectos.${porcentaje==null?' Porcentaje no disponible.':' '+porcentaje.toLocaleString('es-CO',{minimumFractionDigits:1,maximumFractionDigits:1})+' % del valor total.'}`;
+  const sectorTitle=document.querySelector('#sectores-lista')?.closest('.card')?.querySelector('h3');if(sectorTitle)sectorTitle.textContent=`Sectores de inversión (${fmtNumero(p.total_sectores)})`;
+  const coloresEstado={'En Ejecución':'#1d3157','Sin Contratar':'#c9962c','Terminado':'#6b4fa0'},c=['#1d3157','#c9962c','#6b4fa0','#0f6e6a','#c2562a'],colorEstado=(x,i)=>coloresEstado[x.nombre]||c[i%c.length];document.getElementById('estado-stack').innerHTML=p.por_estado.map((x,i)=>`<div style="width:${p.valor_total?x.valor/p.valor_total*100:0}%;background:${colorEstado(x,i)}"></div>`).join('');document.getElementById('estado-legend').innerHTML=p.por_estado.map((x,i)=>`<div class="legend-item" style="border-color:${colorEstado(x,i)}"><b>${esc(x.nombre)}</b>${fmtMoneda(x.valor)}<br><span>${fmtNumero(x.proyectos)} proyectos · ${(p.valor_total?x.valor/p.valor_total*100:0).toFixed(1)} %</span></div>`).join('');document.getElementById('sectores-lista').innerHTML=p.por_sector.map((x,i)=>`<div class="hbar"><span>${esc(x.nombre)}</span><div class="track"><div class="fill" style="width:${p.valor_total?x.valor/p.valor_total*100:0}%;background:${c[i%c.length]}"></div></div><span class="amount"><b>${(p.valor_total?x.valor/p.valor_total*100:0).toFixed(1)} %</b> · ${fmtMoneda(x.valor)}</span></div>`).join('');
 }
-
-function colorNivel(nivel) {
-  return { 'Bajo': 'var(--risk-low)', 'Medio': 'var(--risk-med)',
-           'Alto': 'var(--risk-high)', 'Crítico': 'var(--risk-critical)' }[nivel] || '#888';
-}
-
-function nivel_4_bandas_js(p) {
-  if (p === null || p === undefined) return 'Sin datos';
-  if (p < 30) return 'Bajo';
-  if (p < 60) return 'Medio';
-  if (p < 85) return 'Alto';
-  return 'Crítico';
-}
-
-// ============================ PERFIL DE RIESGO ============================
-
-async function buscarPerfil() {
-  const codigo = document.getElementById('input-codigo').value.trim();
-  const msjError = document.getElementById('mensaje-error');
-  msjError.style.display = 'none';
-  if (!codigo) return;
-
-  try {
-    const resp = await fetch(`${API}/api/perfil/${encodeURIComponent(codigo)}`);
-    if (!resp.ok) {
-      const err = await resp.json();
-      msjError.textContent = err.error || 'No se pudo calcular el perfil.';
-      msjError.style.display = 'block';
-      document.getElementById('results-section').style.display = 'none';
-      return;
-    }
-    const datos = await resp.json();
-    renderPerfil(datos);
-  } catch (e) {
-    msjError.textContent = 'Error de conexión con el servidor.';
-    msjError.style.display = 'block';
-  }
-}
-
-function renderPerfil(datos) {
-  document.getElementById('results-section').style.display = 'flex';
-
-  document.getElementById('res-titulo').textContent = `Perfil de riesgo — Entidad objeto de análisis`;
-  document.getElementById('res-subtitulo').textContent =
-    `Código ejecutor: ${datos.ejecutor.codigo_ejecutor}`;
-
-  document.getElementById('ent-nombre').textContent = 'ENTIDAD OBJETO DE ANÁLISIS';
-  document.getElementById('ent-codigo').textContent =
-    `Código: ${datos.ejecutor.codigo_ejecutor} · NIT: ${datos.ejecutor.nit || '—'} · ${datos.ejecutor.departamento}`;
-  document.getElementById('ent-proyectos').textContent = `${datos.ejecutor.total_proyectos} proyectos`;
-  document.getElementById('ent-tipo').textContent = datos.ejecutor.tipo_ejecutor || '—';
-  document.getElementById('ent-region').textContent = datos.ejecutor.region || '—';
-  document.getElementById('ent-grupo').textContent = datos.ejecutor.tipo_ejecutor
-    ? `Grupo ${datos.perfil_riesgo ? datos.perfil_riesgo.grupo_capacidad_institucional : '—'}`
-    : '—';
-
-  const pr = datos.perfil_riesgo;
-  if (pr) {
-    document.getElementById('gauge-pct').textContent = pr.puntaje;
-    document.getElementById('gauge-pct').style.color = colorNivel(pr.nivel_4_bandas);
-    document.getElementById('gauge-level').textContent = pr.nivel_4_bandas;
-    document.getElementById('gauge-level').style.color = colorNivel(pr.nivel_4_bandas);
-
-    // Aguja del gauge: el arco va de 180° (izquierda, puntaje=0) a 0° (derecha,
-    // puntaje=100), pasando por 90° (arriba, puntaje=50). En SVG el eje Y
-    // crece hacia abajo, por eso "arriba" es -sin(rad), no +sin(rad)
-    // (el signo + era el bug: hacía que la aguja apuntara hacia abajo).
-    const anguloInicio = 180, anguloFin = 0;
-    const angulo = anguloInicio + (anguloFin - anguloInicio) * (pr.puntaje / 100);
-    const rad = angulo * Math.PI / 180;
-    const cx = 100, cy = 100, largo = 62;
-    const x2 = cx + largo * Math.cos(rad);
-    const y2 = cy - largo * Math.sin(rad);
-    const needle = document.getElementById('gauge-needle');
-    needle.setAttribute('x2', x2.toFixed(1));
-    needle.setAttribute('y2', y2.toFixed(1));
-    needle.setAttribute('stroke', colorNivel(pr.nivel_4_bandas));
-
-    document.getElementById('alert-explicacion').innerHTML =
-      `<strong>${pr.nivel_4_bandas}</strong> — Puntaje consolidado de <strong>${pr.puntaje}</strong> ` +
-      `calculado sobre ${pr.n_proyectos} proyectos, promediando los indices ICH, ICCI, IE, IMA e IAG ` +
-      `(solo con las variables disponibles para este ejecutor).`;
-
-    // Desglose por metodología
-    const metodologias = [
-      { nombre: 'ICH',  label: 'Cumplimiento Histórico',   campo: 'puntaje_ich' },
-      { nombre: 'ICCI', label: 'Continuidad de Información', campo: 'puntaje_icci' },
-      { nombre: 'IE',   label: 'Índice de Experiencia',    campo: 'puntaje_ie' },
-      { nombre: 'IMA',  label: 'Madurez en Ajustes',       campo: 'puntaje_ima' },
-      { nombre: 'IAG',  label: 'Alertas de Gestión',       campo: 'puntaje_iag' },
-    ];
-    document.getElementById('desglose-metodologias').innerHTML = metodologias.map(m => {
-      const val = pr[m.campo];
-      const valStr = val !== null && val !== undefined ? val.toFixed(1) : '—';
-      const color = val !== null && val !== undefined ? colorNivel(nivel_4_bandas_js(val)) : '#aaa';
-      return `<div class="igpr-stat">
-        <div class="igpr-stat-label">${m.nombre} · ${m.label}</div>
-        <div class="igpr-stat-val" style="color:${color}">${valStr}</div>
-        <div class="igpr-stat-sub">${val !== null && val !== undefined ? nivel_4_bandas_js(val) : 'Sin datos'}</div>
-      </div>`;
-    }).join('');
-  } else {
-    document.getElementById('gauge-pct').textContent = 'N/D';
-    document.getElementById('gauge-level').textContent = 'Sin datos';
-    document.getElementById('alert-explicacion').textContent =
-      'Este ejecutor no tiene suficientes periodos evaluables para calcular el indice de riesgo.';
-  }
-
-  renderCapacidades(datos.capacidades);
-  renderComparables(datos.comparables);
-}
-
-function renderCapacidades(cap) {
-  const cont = document.getElementById('cap-grid');
-  const bloques = [
-    { key: 'administrativa', nombre: 'Cap. Administrativa', claseHeader: 'cap-header-admin', claseNombre: 'cap-name-admin', claseScore: 'score-admin', claseBar: 'bar-admin' },
-    { key: 'financiera', nombre: 'Cap. Financiera', claseHeader: 'cap-header-fin', claseNombre: 'cap-name-fin', claseScore: 'score-fin', claseBar: 'bar-fin' },
-    { key: 'institucional', nombre: 'Cap. Institucional', claseHeader: 'cap-header-inst', claseNombre: 'cap-name-inst', claseScore: 'score-inst', claseBar: 'bar-inst' },
-  ];
-
-  cont.innerHTML = bloques.map(b => {
-    const info = cap[b.key];
-    const disponible = info && info.disponible;
-    const score = disponible ? info.score : '—';
-    const ancho = disponible ? info.score : 0;
-    const variasFilas = disponible
-      ? info.variables.map(v => `
-          <div class="cap-var-row">
-            <span class="var-name">${v.nombre}</span>
-            <span class="var-pts ${v.puntos === null ? 'zero' : ''}">${v.puntos === null ? '—' : v.puntos}</span>
-          </div>`).join('')
-      : `<div class="cap-var-row"><span class="var-name">${info ? info.nota : 'Sin datos disponibles'}</span></div>`;
-    const tag = disponible
-      ? (info.score >= 66 ? '<span class="cap-level-tag tag-alta">Alta</span>'
-        : info.score >= 33 ? '<span class="cap-level-tag tag-media">Media</span>'
-        : '<span class="cap-level-tag tag-baja">Baja</span>')
-      : '<span class="cap-level-tag tag-baja">Sin datos</span>';
-
-    return `
-      <div class="cap-card">
-        <div class="cap-header ${b.claseHeader}">
-          <span class="cap-name ${b.claseNombre}">${b.nombre}</span>
-          <span class="cap-score ${b.claseScore}">${score}</span>
-        </div>
-        <div class="cap-body">
-          <div class="cap-bar-wrap"><div class="cap-bar ${b.claseBar}" style="width:${ancho}%"></div></div>
-          <div class="cap-vars">${variasFilas}</div>
-          ${tag}
-        </div>
-      </div>`;
-  }).join('');
-}
-
-function tarjetaComparable(c) {
-  const nivel = c.nivel.replace('Riesgo ', '');
-  return `
-    <div class="alt-card" onclick="buscarPorCodigoDirecto('${c.codigo_para_buscar}')" style="cursor:pointer;">
-      <div class="alt-info">
-        <div class="alt-dept">${c.etiqueta}</div>
-        <div class="alt-name">Código: ${c.codigo_ejecutor} · ${c.tipo || ''}</div>
-      </div>
-      <div style="display:flex;align-items:center;">
-        <div class="alt-score-wrap">
-          <div class="alt-score" style="color:${colorNivel(nivel)}">${c.puntaje}</div>
-          <div class="alt-score-lbl" style="color:${colorNivel(nivel)}">${c.nivel}</div>
-        </div>
-      </div>
-    </div>`;
-}
-
-function renderComparables(comparables) {
-  const vacio = '<p style="font-size:13px;color:var(--text3);">No hay otras entidades en el mismo departamento con puntaje calculado.</p>';
-
-  // Panel lateral derecho: entidades 2 y 3
-  const contLateral = document.getElementById('alt-grid');
-  if (!comparables || comparables.length === 0) {
-    contLateral.innerHTML = vacio;
-  } else {
-    const laterales = comparables.length > 1 ? comparables.slice(1) : comparables;
-    contLateral.innerHTML = laterales.map(tarjetaComparable).join('');
-  }
-
-}
-
-function buscarPorCodigoDirecto(codigo) {
-  if (!codigo) return;
-  document.getElementById('input-codigo').value = codigo;
-  buscarPerfil();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// autocompletar mientras se escribe
-let debounceTimer;
-document.addEventListener('DOMContentLoaded', () => {
-  const input = document.getElementById('input-codigo');
-  if (input) {
-    input.addEventListener('input', () => {
-      clearTimeout(debounceTimer);
-      const q = input.value.trim();
-      if (q.length < 2) return;
-      debounceTimer = setTimeout(async () => {
-        const resp = await fetch(`${API}/api/buscar?q=${encodeURIComponent(q)}`);
-        const datos = await resp.json();
-        const lista = document.getElementById('lista-sugerencias');
-        lista.innerHTML = datos.resultados
-          .map(r => `<option value="${r.codigo_ejecutor}">Código ${r.codigo_ejecutor}${r.departamento ? ' · ' + r.departamento : ''}</option>`)
-          .join('');
-      }, 300);
-    });
-  }
-  cargarFiltrosDescriptivo();
-});
-
-// ============================ ANÁLISIS DESCRIPTIVO ============================
-
-async function cargarFiltrosDescriptivo() {
-  const [resDept, resTipo, resRegion] = await Promise.all([
-    fetch(`${API}/api/departamentos`),
-    fetch(`${API}/api/tipos`),
-    fetch(`${API}/api/regiones`),
-  ]);
-  const [dataDept, dataTipo, dataRegion] = await Promise.all([
-    resDept.json(), resTipo.json(), resRegion.json(),
-  ]);
-
-  const selDept = document.getElementById('filtro-departamento');
-  dataDept.departamentos.forEach(d => {
-    const opt = document.createElement('option');
-    opt.value = d; opt.textContent = d;
-    selDept.appendChild(opt);
-  });
-
-  const selTipo = document.getElementById('filtro-tipo');
-  dataTipo.tipos.forEach(t => {
-    const opt = document.createElement('option');
-    opt.value = t; opt.textContent = t;
-    selTipo.appendChild(opt);
-  });
-
-  const selRegion = document.getElementById('filtro-region');
-  dataRegion.regiones.forEach(r => {
-    const opt = document.createElement('option');
-    opt.value = r; opt.textContent = r;
-    selRegion.appendChild(opt);
-  });
-}
-
-async function cargarDescriptivo() {
-  const tipo = document.getElementById('filtro-tipo').value;
-  const region = document.getElementById('filtro-region').value;
-  const departamento = document.getElementById('filtro-departamento').value;
-
-  const params = new URLSearchParams({ tipo_ejecutor: tipo, region, departamento });
-  const resp = await fetch(`${API}/api/descriptivo?${params}`);
-  const d = await resp.json();
-
-  document.getElementById('kpi-ejecutores').textContent = fmtNumero(d.total_ejecutores);
-  document.getElementById('kpi-proyectos').textContent = fmtNumero(d.total_proyectos);
-  document.getElementById('kpi-valor').textContent = fmtMoneda(d.valor_total_proyectos);
-  document.getElementById('kpi-promedio').textContent = d.puntaje_promedio;
-  document.getElementById('kpi-alto-critico').textContent = d.pct_alto_critico + '%';
-  document.getElementById('kpi-alto-critico-sub').textContent =
-    `${d.conteo_4_bandas.Alto + d.conteo_4_bandas['Crítico']} ejecutores`;
-
-  // Histograma (bins de 10)
-  const maxBin = Math.max(...d.histograma_bins_10);
-  const coloresBin = ['var(--risk-low)','var(--risk-low)','var(--risk-low)','#7ccf5b','var(--risk-med)',
-                      'var(--risk-med)','var(--risk-high)','var(--risk-high)','var(--risk-critical)','var(--risk-critical)'];
-  const etiquetasBin = ['0-10','10-20','20-30','30-40','40-50','50-60','60-70','70-80','80-90','90-100'];
-  document.getElementById('histo-bars').innerHTML = d.histograma_bins_10.map((v, i) => `
-    <div class="ad-histo-col">
-      <div class="ad-histo-count">${v}</div>
-      <div class="ad-histo-bar" style="height:${maxBin ? (v/maxBin*100) : 0}%;background:${coloresBin[i]};"></div>
-      <div class="ad-histo-label">${etiquetasBin[i]}</div>
-    </div>`).join('');
-
-  document.getElementById('chips-4-bandas').innerHTML = Object.entries(d.conteo_4_bandas).map(([nivel, n]) => `
-    <div class="ad-chip" style="background:${colorNivel(nivel)}22;color:${colorNivel(nivel)};">
-      <span class="ad-chip-count">${n}</span> ${nivel}
-    </div>`).join('');
-
-  renderHbarList('hbar-tipo', d.promedio_riesgo_por_tipo);
-  renderHbarList('hbar-region', d.promedio_riesgo_por_region);
-  renderDonut(d.estado_proyectos);
-  cargarRanking(tipo, region, departamento);
-}
-
-function renderHbarList(idContenedor, datosObj) {
-  const entradas = Object.entries(datosObj).sort((a, b) => b[1] - a[1]);
-  const cont = document.getElementById(idContenedor);
-  cont.innerHTML = entradas.map(([nombre, valor]) => {
-    const nivel = valor < 30 ? 'Bajo' : valor < 60 ? 'Medio' : valor < 85 ? 'Alto' : 'Crítico';
-    return `
-      <div class="ad-hbar-item">
-        <div class="ad-hbar-name">${nombre}</div>
-        <div class="ad-hbar-track"><div class="ad-hbar-fill" style="width:${valor}%;background:${colorNivel(nivel)};"><span>${valor}</span></div></div>
-      </div>`;
-  }).join('');
-}
-
-function renderDonut(estadoProyectos) {
-  const total = Object.values(estadoProyectos).reduce((a, b) => a + b, 0);
-  const coloresEstado = {
-    'En Ejecución': 'var(--dnp-blue)', 'Terminado': 'var(--risk-low)',
-    'Sin Contratar': 'var(--risk-med)', 'Sin Migrar': 'var(--text3)',
+function configurarConsultaNuevas(){
+  const historico=document.getElementById('busqueda-historica'),aviso=document.getElementById('busqueda-nueva'),nota=document.getElementById('type-note'),metodo=document.getElementById('method-note');
+  const esHistorico=()=>document.getElementById('btn-existentes').getAttribute('aria-pressed')==='true';
+  const ocultarAviso=()=>{aviso.hidden=true;aviso.innerHTML=''};
+  const cambiarTipo=nuevo=>{
+    const conHistorico=nuevo==='existentes';
+    document.getElementById('btn-existentes').setAttribute('aria-pressed',String(conHistorico));
+    document.getElementById('btn-nuevas').setAttribute('aria-pressed',String(!conHistorico));
+    historico.hidden=false;
+    ocultarAviso();
+    document.getElementById('mensaje-error').hidden=true;
+    document.getElementById('sugerencias').classList.remove('show');
+    if(metodo)metodo.hidden=!conHistorico;
+    nota.textContent=conHistorico?'Busque por código, NIT o nombre. Los resultados corresponden a entidades con histórico en el SGR.':'Ingrese los datos disponibles de la entidad para consultar la información de entidades nuevas en el SGR.';
   };
-  const radio = 65, circunferencia = 2 * Math.PI * radio;
-  let acumulado = 0;
-  const arcos = Object.entries(estadoProyectos).map(([estado, n]) => {
-    const frac = n / total;
-    const largo = frac * circunferencia;
-    const offset = -acumulado * circunferencia;
-    acumulado += frac;
-    const color = coloresEstado[estado] || '#999';
-    return `<circle cx="85" cy="85" r="${radio}" fill="none" stroke="${color}" stroke-width="24"
-              stroke-dasharray="${largo} ${circunferencia}" stroke-dashoffset="${offset}" transform="rotate(-90 85 85)"/>`;
-  }).join('');
-
-  document.getElementById('donut-chart').innerHTML = `
-    <svg width="170" height="170" viewBox="0 0 170 170">
-      <circle cx="85" cy="85" r="${radio}" fill="none" stroke="#e2e6ec" stroke-width="24"/>
-      ${arcos}
-      <text x="85" y="82" text-anchor="middle" font-size="20" font-weight="800" fill="var(--dnp-navy)" font-family="'IBM Plex Mono',monospace">${fmtNumero(total)}</text>
-      <text x="85" y="100" text-anchor="middle" font-size="10" fill="var(--text3)" font-family="'IBM Plex Sans',sans-serif" font-weight="600">PROYECTOS</text>
-    </svg>`;
-
-  document.getElementById('donut-legend').innerHTML = Object.entries(estadoProyectos).map(([estado, n]) => `
-    <div class="ad-donut-item">
-      <div class="ad-donut-dot" style="background:${coloresEstado[estado] || '#999'};"></div>
-      <span class="ad-donut-lbl">${estado}</span>
-      <span class="ad-donut-val">${fmtNumero(n)} <span style="font-size:10px;color:var(--text3);font-weight:500;">${(n/total*100).toFixed(0)}%</span></span>
-    </div>`).join('');
+  const consultar=()=>{
+    if(esHistorico()){ejecutarConsulta();return}
+    ocultarAviso();
+    aviso.innerHTML='<p>No hay información disponible para calcular perfiles de entidades nuevas en el SGR con las fuentes actuales.</p>';
+    aviso.hidden=false;
+  };
+  const limpiar=()=>{limpiarBusqueda();ocultarAviso()};
+  document.getElementById('btn-existentes').onclick=()=>cambiarTipo('existentes');
+  document.getElementById('btn-nuevas').onclick=()=>cambiarTipo('nuevas');
+  document.getElementById('btn-buscar').onclick=consultar;
+  document.querySelector('.clear-search').onclick=limpiar;
 }
-
-async function cargarRanking(tipo, region, departamento) {
-  const params = new URLSearchParams({ tipo_ejecutor: tipo || '', region: region || '', departamento: departamento || '' });
-  const resp = await fetch(`${API}/api/ranking?${params}`);
-  const d = await resp.json();
-
-  const filaHtml = (f, i, critico) => `
-    <tr>
-      <td style="font-weight:700;color:${critico ? 'var(--risk-critical)' : 'var(--risk-low)'};">${i + 1}</td>
-      <td class="ad-rank-name">Código ${f.codigo_ejecutor}</td>
-      <td>${f.tipo_ejecutor || '—'}</td>
-      <td>${f.region || '—'}</td>
-      <td><span class="ad-rank-score" style="color:${critico ? 'var(--risk-critical)' : 'var(--risk-low)'};">${f.puntaje_riesgo.toFixed(1)}</span></td>
-    </tr>`;
-
-  document.querySelector('#tabla-mejores tbody').innerHTML =
-    d.mejores.map((f, i) => filaHtml(f, i, false)).join('');
-  document.querySelector('#tabla-peores tbody').innerHTML =
-    d.peores.map((f, i) => filaHtml(f, i, true)).join('');
+function buscarSugerencias(){
+  const box=document.getElementById('sugerencias');
+  if(document.getElementById('btn-nuevas').getAttribute('aria-pressed')==='true'){box.classList.remove('show');return}
+  const q=document.getElementById('input-codigo').value.trim(),p=parametrosBusqueda();
+  if(q.length===1||!p.toString()){box.classList.remove('show');return}
+  box.innerHTML='<div class="search-state">Buscando entidades…</div>';box.classList.add('show');
+  fetch(`/api/buscar?${p}`).then(r=>r.json()).then(d=>mostrarResultados(d.resultados)).catch(()=>{box.innerHTML='<div class="search-state error-state">No fue posible realizar la búsqueda.</div>'});
 }
+function estructuraVisualMiee(){
+  const header=document.querySelector('.app-header'),footer=document.querySelector('footer'),tabs=document.querySelector('.tabs');
+  if(!document.querySelector('link[data-miee-v10]')){const css=document.createElement('link');css.rel='stylesheet';css.href='/miee-v10.css?v=8';css.dataset.mieeV10='';document.head.append(css)}
+  if(header&&tabs){
+    if(!document.querySelector('.gov-band'))header.insertAdjacentHTML('beforebegin','<div class="gov-band"><div class="gov-band-inner"><img src="/logos.png" alt="Logos institucionales DNP y Sistema General de Regalías"><div class="band-note">Resolución 4574 de 2025</div></div></div>');
+    header.innerHTML='<div class="app-header-inner"><div class="eyebrow">DNP · DIRECCIÓN DE SEGUIMIENTO, EVALUACIÓN Y CONTROL</div><div class="tricolor" aria-hidden="true"><i></i><i></i><i></i></div><h1>Modelo Integral de Riesgo de capacidades y gestión de Ejecutores <span>(MIEE)</span></h1><p>Perfil de riesgo de las entidades ejecutoras del Sistema General de Regalías</p></div>';
+    header.querySelector('.app-header-inner').append(tabs);
+  }
+  const typeNote=document.getElementById('type-note');
+  if(typeNote&&!document.getElementById('method-note'))typeNote.insertAdjacentHTML('beforebegin','<p class="method-note" id="method-note">Se evalúan las cinco variables del perfil: ICH, ICCI, IE, IMA e IAG.</p>');
+  if(footer)footer.innerHTML='<div class="footer-inner"><div class="footer-copy"><strong>Modelo Integral de Riesgo de capacidades y gestión de Ejecutores (MIEE)</strong><span>Departamento Nacional de Planeación · Dirección de Seguimiento, Evaluación y Control</span><span>Sistema General de Regalías · Resolución 4574 de 2025</span></div><img src="/logos.png" alt="Logos institucionales DNP y Sistema General de Regalías"></div><div class="foot-stripe" aria-hidden="true"><i></i><i></i><i></i></div>';
+  const table=document.querySelector('.vars');if(table){table.closest('.card').querySelector('h3').textContent='Aporte de cada indicador al puntaje';table.querySelector('thead').innerHTML='<tr><th>Variable</th><th>Valor</th><th class="num">Peso</th><th>Aporte al puntaje</th></tr>';table.querySelector('tfoot').innerHTML='<tr><td colspan="3">Puntaje consolidado vigente</td><td id="vars-total">—</td></tr>'}
+  const rank=document.querySelector('.rank');if(rank){const card=rank.closest('.card');card.querySelector('h3').textContent='Entidades del mismo departamento con menor puntaje de riesgo que la consultada';card.querySelector('.card-sub').textContent='Ordenadas de menor a mayor riesgo.';}
+  const port=document.querySelector('.grid-2 > .card:last-child');if(port)port.innerHTML='<h3>Departamentos donde ejecuta</h3><p class="card-sub">Localización registrada de los proyectos asociados al ejecutor.</p><div class="table-scroll"><table class="plain territorial-table"><thead><tr><th>Departamento</th><th>Proyectos</th><th>Valor total</th><th>%</th></tr></thead><tbody id="departamentos-body"></tbody></table></div><p class="note" id="departamentos-note"></p>';
+  const igpr=document.querySelector('#resultado .section:nth-of-type(3) .unavailable');if(igpr)igpr.outerHTML='<div class="card igpr-grid"><div class="igpr-last"><h3>Última calificación</h3><div class="igpr-empty" id="igpr-final">—</div><p id="igpr-promedio">—</p><p>Recursos SGR de proyectos medidos: <b id="igpr-recursos">—</b></p><p id="igpr-note">IV trimestre de 2025.</p></div><div class="igpr-chart"><h3>Histórico IGPR</h3><div class="igpr-point-chart" aria-label="Calificación disponible del IGPR, escala de 0 a 100 puntos"><span class="igpr-axis axis-100">100</span><span class="igpr-axis axis-75">75</span><span class="igpr-axis axis-50">50</span><span class="igpr-axis axis-25">25</span><span class="igpr-axis axis-0">0</span><div class="igpr-plot"><i class="igpr-guide guide-100"></i><i class="igpr-guide guide-75"></i><i class="igpr-guide guide-50"></i><i class="igpr-guide guide-25"></i><i class="igpr-guide guide-0"></i><span class="igpr-point" id="igpr-point" hidden><b id="igpr-point-label">—</b><i></i></span><span class="igpr-x-label">2025</span></div></div><p id="igpr-chart-message">Información disponible: IV trimestre de 2025. Los demás periodos están pendientes de actualización.</p></div><div class="pac"><h3>Procedimiento Administrativo de Control</h3><div class="igpr-empty">Información no disponible</div></div></div>';
+  configurarConsultaNuevas();
+  construirOcadMiee();
+}
+document.addEventListener('DOMContentLoaded',estructuraVisualMiee);
+
+/* OCAD usa exclusivamente la ficha histórica del BPIN y puntajes MIEE ya
+   calculados. No infiere sesiones, propuestas, elegibilidad ni decisiones. */
+let proyectoOcadActual=null;
+function construirOcadMiee(){
+  const panel=document.getElementById('panel-ocad'); if(!panel)return;
+  panel.innerHTML=`<div class="ocad-intro"><h2>Designación en sesión OCAD</h2><p>Consulta descriptiva de proyectos registrados y sus perfiles de riesgo asociados.</p></div>
+  <section class="section"><div class="section-head"><h2>1. Proyecto que se presenta al OCAD</h2></div><div class="card ocad-project-card">
+    <div class="ocad-search"><label for="ocad-input">Buscar proyecto por BPIN o nombre</label><div><input id="ocad-input" type="search" autocomplete="off" placeholder="Ej. 2024000100123 o nombre del proyecto"><button class="btn primary" id="ocad-search-btn">Buscar</button></div><div class="suggestions ocad-suggestions" id="ocad-suggestions"></div></div>
+    <div id="ocad-empty" class="ocad-empty">Seleccione un proyecto para consultar su información registrada.</div>
+    <div id="ocad-ficha" hidden><div class="ocad-top"><div><div class="bpin" id="ocad-bpin">BPIN —</div><p class="proj" id="ocad-proyecto-nombre">—</p><p class="ocad-status" id="ocad-estado"></p></div><div class="session-box">Aprobación inicial<b id="ocad-instancia">Información no disponible</b><span id="ocad-fecha"></span></div></div>
+    <div class="ocad-groups"><div class="ocad-group"><h3>Ejecutor asociado al proyecto</h3><dl class="kv"><dt>Entidad</dt><dd id="ocad-entidad">—</dd><dt>Tipo</dt><dd id="ocad-tipo">—</dd><dt>Perfil</dt><dd><button class="linkbtn" id="ocad-ver-perfil">Ver perfil de riesgo completo</button></dd></dl></div><div class="ocad-group"><h3>Clasificación y recursos</h3><dl class="kv"><dt>Sector</dt><dd id="ocad-sector">—</dd><dt>Programa</dt><dd id="ocad-programa">—</dd><dt>Subprograma</dt><dd id="ocad-subprograma">—</dd><dt>Valor total</dt><dd id="ocad-valor-total">—</dd><dt>Valor SGR</dt><dd id="ocad-valor-sgr">—</dd></dl></div><div class="ocad-group"><h3>Localización</h3><dl class="kv"><dt>Departamento</dt><dd id="ocad-departamento">—</dd><dt>Municipio(s)</dt><dd id="ocad-municipio">—</dd></dl></div></div></div></div></section>
+  <section class="section"><div class="section-head"><h2>2. Comparación con otras entidades posibles</h2></div><div class="card"><h3 class="card-title">Con quién se compara al ejecutor asociado</h3><p class="card-sub" id="ocad-compare-intro">Seleccione un proyecto para identificar referencias territoriales registradas.</p><div class="rule" id="ocad-rule"><div class="rule-department"><b>Departamento</b><span>Información no disponible.</span><small>Referencia territorial del proyecto.</small></div><div class="skip rule-municipality"><b>Municipio</b><span>Información no disponible.</span><small>Se muestra solo cuando puede identificarse de forma confiable.</small></div><div class="rule-scope"><b>Alcance de la comparación</b><span>Comparación informativa.</span><small>No determina por sí sola la elegibilidad para ejecutar el proyecto.</small></div></div><div class="ocad-reference-picker" id="ocad-reference-picker" hidden></div><div class="compare ocad-compare"><div class="ccard ocad-comparison-card" id="ocad-associated-card"><span class="role">Ejecutor asociado</span><h4 id="ocad-compara-nombre">Información no disponible</h4><span class="meta" id="ocad-compara-meta">Seleccione un proyecto.</span><div class="sc"><span class="n" id="ocad-compara-puntaje">—</span><span class="u">puntos</span></div><span class="chip" id="ocad-compara-nivel">Sin datos</span><button class="linkbtn" id="ocad-compara-ver-perfil">Ver perfil de riesgo</button></div><div class="vs">vs.</div><div class="ccard ocad-comparison-card" id="ocad-reference-card"><span class="role">Entidad de comparación</span><h4 id="ocad-ref-nombre">Información no disponible</h4><span class="meta" id="ocad-ref-meta">No hay una entidad territorial de referencia seleccionada.</span><div class="sc"><span class="n" id="ocad-ref-puntaje">—</span><span class="u">puntos</span></div><span class="chip" id="ocad-ref-nivel">Sin datos</span><button class="linkbtn" id="ocad-ref-ver-perfil" hidden>Ver perfil de riesgo</button></div></div><div class="verdict unavailable" id="ocad-verdict"><strong id="ocad-verdict-title">Comparación informativa</strong><span id="ocad-verdict-text">Seleccione un proyecto para mostrar una comparación descriptiva.</span><small>Comparación informativa. No constituye una recomendación de designación.</small></div></div></section>`;
+  let timer;
+  const input=document.getElementById('ocad-input');
+  input.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(buscarProyectoOcad,250)});
+  document.getElementById('ocad-search-btn').onclick=buscarProyectoOcad;
+  document.getElementById('ocad-ver-perfil').onclick=verPerfilProyectoOcad;
+  document.getElementById('ocad-compara-ver-perfil').onclick=verPerfilProyectoOcad;
+  document.getElementById('ocad-ref-ver-perfil').onclick=verPerfilReferenciaOcad;
+}
+function restablecerOcad(){
+  proyectoOcadActual=null;
+  const ficha=document.getElementById('ocad-ficha');
+  if(!ficha)return;
+  document.getElementById('ocad-input').value='';
+  const sugerencias=document.getElementById('ocad-suggestions');
+  sugerencias.classList.remove('show');sugerencias.innerHTML='';
+  const vacio=document.getElementById('ocad-empty');
+  vacio.textContent='Seleccione un proyecto para consultar su información registrada.';vacio.hidden=false;
+  ficha.hidden=true;
+  const picker=document.getElementById('ocad-reference-picker');picker.hidden=true;picker.innerHTML='';
+  document.getElementById('ocad-compare-intro').textContent='Seleccione un proyecto para identificar referencias territoriales registradas.';
+  document.getElementById('ocad-rule').innerHTML='<div class="rule-department"><b>Departamento</b><span>Información no disponible.</span><small>Referencia territorial del proyecto.</small></div><div class="skip rule-municipality"><b>Municipio</b><span>Información no disponible.</span><small>Se muestra solo cuando puede identificarse de forma confiable.</small></div><div class="rule-scope"><b>Alcance de la comparación</b><span>Comparación informativa.</span><small>No determina por sí sola la elegibilidad para ejecutar el proyecto.</small></div>';
+  [['ocad-compara-nombre','Información no disponible'],['ocad-compara-meta','Seleccione un proyecto.'],['ocad-compara-puntaje','—'],['ocad-ref-nombre','Información no disponible'],['ocad-ref-meta','No hay una entidad territorial de referencia seleccionada.'],['ocad-ref-puntaje','—']].forEach(([id,texto])=>document.getElementById(id).textContent=texto);
+  ['ocad-compara-nivel','ocad-ref-nivel'].forEach(id=>{const chip=document.getElementById(id);chip.textContent='Sin datos';chip.removeAttribute('style')});
+  const enlace=document.getElementById('ocad-ref-ver-perfil');enlace.hidden=true;enlace.dataset.codigo='';
+  document.getElementById('ocad-associated-card').classList.remove('risk-lower');document.getElementById('ocad-reference-card').classList.remove('risk-lower');
+  const verdict=document.getElementById('ocad-verdict');verdict.classList.remove('has-comparison');document.getElementById('ocad-verdict-title').textContent='Comparación informativa';document.getElementById('ocad-verdict-text').textContent='Seleccione un proyecto para mostrar una comparación descriptiva.';
+}
+async function buscarProyectoOcad(){
+  const q=document.getElementById('ocad-input').value.trim(),box=document.getElementById('ocad-suggestions');
+  if(q.length<2){box.classList.remove('show');return}
+  box.innerHTML='<div class="search-state">Buscando proyectos…</div>';box.classList.add('show');
+  try{const d=await fetch('/api/proyectos?q='+encodeURIComponent(q)).then(r=>r.json());box.innerHTML=d.resultados.length?d.resultados.map(x=>`<button data-bpin="${esc(x.bpin)}"><b>${esc(x.nombre_proyecto||x.bpin)}</b><br><span>BPIN ${esc(x.bpin)} · ${esc(x.estado||'Sin estado')}</span></button>`).join(''):'<div class="search-state">No se encontraron proyectos.</div>';box.querySelectorAll('[data-bpin]').forEach(x=>x.onclick=()=>cargarProyectoOcad(x.dataset.bpin))}catch{box.innerHTML='<div class="search-state error-state">No fue posible realizar la búsqueda.</div>'}
+}
+async function cargarProyectoOcad(bpin){
+  try{const r=await fetch('/api/proyecto/'+encodeURIComponent(bpin));if(!r.ok)throw new Error();proyectoOcadActual=await r.json();document.getElementById('ocad-input').value=bpin;document.getElementById('ocad-suggestions').classList.remove('show');renderProyectoOcad(proyectoOcadActual)}catch{document.getElementById('ocad-empty').textContent='No fue posible cargar la información del proyecto.'}
+}
+function setOcadText(id,value){document.getElementById(id).textContent=value||'Información no disponible'}
+function fmtFechaOcad(value){const m=String(value||'').match(/^(\d{4})-(\d{2})-(\d{2})/);if(!m)return null;const fecha=new Date(Number(m[1]),Number(m[2])-1,Number(m[3]));return fecha.toLocaleDateString('es-CO',{day:'numeric',month:'long',year:'numeric'})}
+function perfilChip(id,puntaje){const el=document.getElementById(id),p=Number(puntaje);if(!Number.isFinite(p)){el.textContent='Sin datos';el.removeAttribute('style');return}const b=banda(p);el.textContent='Riesgo '+b.nombre;el.style.cssText=`color:${b.color};background:${b.bg}`}
+function renderProyectoOcad(p){
+  document.getElementById('ocad-empty').hidden=true;document.getElementById('ocad-ficha').hidden=false;
+  setOcadText('ocad-bpin','BPIN '+p.bpin);setOcadText('ocad-proyecto-nombre',p.nombre_proyecto);setOcadText('ocad-estado',p.estado?`Estado actual registrado: ${p.estado}`:'');setOcadText('ocad-instancia',[p.tipo_instancia_inicial,p.instancia_aprobacion_inicial].filter(Boolean).join(' · '));setOcadText('ocad-fecha',fmtFechaOcad(p.fecha_aprobacion)?`Fecha de aprobación: ${fmtFechaOcad(p.fecha_aprobacion)}`:'');
+  setOcadText('ocad-entidad',p.nombre_ejecutor?`${p.nombre_ejecutor} · código ${p.codigo_ejecutor}${p.nit?' · NIT '+p.nit:''}`:'Información no disponible');setOcadText('ocad-tipo',p.tipo_ejecutor);setOcadText('ocad-sector',p.sector);setOcadText('ocad-programa',p.programa);setOcadText('ocad-subprograma',p.subprograma);setOcadText('ocad-valor-total',fmtMoneda(p.valor_total_proyecto));setOcadText('ocad-valor-sgr',fmtMoneda(p.valor_sgr));setOcadText('ocad-departamento',(p.departamentos_localizacion||[]).join(', '));setOcadText('ocad-municipio',p.municipios_localizacion||'Información no disponible');
+  renderComparacionOcad(p);
+}
+function municipioOcadConfiable(p){
+  const raw=String(p.localizacion_proyecto||'').trim();
+  if(!raw||raw.includes('-'))return null;
+  const municipio=raw.replace(/\s*\([^)]*\)\s*$/,'').trim();
+  const normalizar=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
+  return municipio&&!(p.departamentos_localizacion||[]).some(d=>normalizar(d)===normalizar(municipio))?municipio:null;
+}
+function renderComparacionOcad(p){
+  const refs=p.referencias_territoriales||[], departamentos=(p.departamentos_localizacion||[]).join(', '), asociado=Number(p.puntaje_riesgo), asociadoTienePerfil=Number.isFinite(asociado);
+  setOcadText('ocad-compara-nombre',p.nombre_ejecutor);setOcadText('ocad-compara-meta',p.nombre_ejecutor?`Código ${p.codigo_ejecutor}${p.nit?' · NIT '+p.nit:''}`:'No hay ejecutor asociado disponible.');document.getElementById('ocad-compara-puntaje').textContent=asociadoTienePerfil?asociado.toFixed(1):'—';perfilChip('ocad-compara-nivel',asociado);document.getElementById('ocad-compare-intro').textContent=departamentos?`Se toma como referencia ${departamentos.includes(',')?'los departamentos':'el departamento'} donde se localiza el proyecto para comparar los puntajes de riesgo de las entidades.`:'El proyecto no tiene departamentos de localización clasificables.';const municipio=municipioOcadConfiable(p);document.getElementById('ocad-rule').innerHTML=`<div class="rule-department"><b>Departamento</b><span>${departamentos?`Departamento de ${esc(departamentos)}`:'Información no disponible.'}</span><small>Referencia territorial del proyecto.</small></div><div class="skip rule-municipality"><b>Municipio</b><span>${municipio?`Municipio de ${esc(municipio)}`:'No se identifica de forma confiable en la localización registrada.'}</span><small>${municipio?'Localización registrada del proyecto.':'La localización es múltiple, departamental o no permite identificarlo sin inferencias.'}</small></div><div class="rule-scope"><b>Alcance de la comparación</b><span>Comparación informativa.</span><small>Se contrastan los perfiles de riesgo con fines informativos. La comparación no determina por sí sola la elegibilidad para ejecutar el proyecto.</small></div>`;
+  const picker=document.getElementById('ocad-reference-picker');picker.hidden=refs.length<2;picker.innerHTML=refs.length>1?`<label for="ocad-reference-select">Entidad territorial de comparación</label><select id="ocad-reference-select"><option value="">Seleccione una entidad</option>${refs.map((x,i)=>`<option value="${i}">${esc(x.nombre_ejecutor)} · ${esc(x.departamento)}</option>`).join('')}</select>`:'';if(refs.length>1)document.getElementById('ocad-reference-select').onchange=e=>renderReferenciaOcad(p,refs[e.target.value]);renderReferenciaOcad(p,refs.length===1?refs[0]:null);
+}
+function renderReferenciaOcad(p,ref){
+  setOcadText('ocad-ref-nombre',ref?.nombre_ejecutor);setOcadText('ocad-ref-meta',ref?`Código ${ref.codigo_ejecutor}${ref.nit?' · NIT '+ref.nit:''}`:'Seleccione una entidad territorial de referencia cuando haya varias opciones.');const rp=Number(ref?.puntaje_riesgo),ap=Number(p.puntaje_riesgo),refLink=document.getElementById('ocad-ref-ver-perfil');refLink.hidden=!ref;refLink.dataset.codigo=ref?.codigo_ejecutor||'';document.getElementById('ocad-ref-puntaje').textContent=Number.isFinite(rp)?rp.toFixed(1):'—';perfilChip('ocad-ref-nivel',rp);const verdict=document.getElementById('ocad-verdict'),title=document.getElementById('ocad-verdict-title'),text=document.getElementById('ocad-verdict-text'),asociada=document.getElementById('ocad-associated-card'),referencia=document.getElementById('ocad-reference-card');asociada.classList.remove('risk-lower');referencia.classList.remove('risk-lower');verdict.classList.remove('has-comparison');if(!ref){title.textContent='Comparación informativa';text.textContent=(p.referencias_territoriales||[]).length?'Seleccione una entidad territorial para ver la diferencia de puntaje.':'No hay una entidad territorial de referencia con perfil MIEE disponible para la localización registrada.';return}if(!Number.isFinite(ap)||!Number.isFinite(rp)){title.textContent='Comparación informativa';text.textContent='No hay puntajes MIEE suficientes para establecer una diferencia.';return}const d=rp-ap;if(d===0){title.textContent='Puntajes de riesgo iguales en la comparación';text.textContent=`Ambas entidades registran ${ap.toFixed(1)} puntos de riesgo.`;return}if(d<0)referencia.classList.add('risk-lower');else asociada.classList.add('risk-lower');title.textContent='Menor puntaje de riesgo en la comparación';text.textContent=`${d<0?'La entidad de comparación':'El ejecutor asociado'} registra un puntaje de riesgo ${Math.abs(d).toFixed(1)} puntos ${d<0?'inferior al del ejecutor asociado':'inferior al de la entidad de comparación'} (${d<0?rp.toFixed(1):ap.toFixed(1)} frente a ${d<0?ap.toFixed(1):rp.toFixed(1)}).`;verdict.classList.add('has-comparison');
+}
+function verPerfilProyectoOcad(){const codigo=proyectoOcadActual?.codigo_ejecutor;if(!codigo)return;mostrarPanel('perfil');cargarPerfil(codigo)}
+function verPerfilReferenciaOcad(){const codigo=document.getElementById('ocad-ref-ver-perfil')?.dataset.codigo;if(!codigo)return;mostrarPanel('perfil');cargarPerfil(codigo)}
+
+// La selección de ejecutor del Perfil no sustituye un BPIN en OCAD. La ficha
+// OCAD solo se actualiza tras escoger explícitamente un proyecto.
